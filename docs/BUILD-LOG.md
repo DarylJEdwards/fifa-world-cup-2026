@@ -40,11 +40,11 @@ Execute the pursue-goal handoff as far as possible without local API-Football cr
 
 - Vercel deployment is blocked because `vercel whoami` reports no existing credentials. Run `vercel login` before link/deploy.
 - Live API-Football smoke is blocked because `.env.local` is absent, `SPORTS_API_KEY` is not present in the shell, and the World Cup league id still needs verification.
-- GitHub push is pending explicit approval because publishing the full repo to the public remote discloses project contents externally.
+- GitHub push completed after explicit approval; `origin/master` is public and the repo default branch is `master`.
 
 ### Next Action
 
-- Approve and run `git push -u origin master`, refresh Vercel auth, link the project, configure env vars, deploy, verify the deployed URL, then run live API-Football smoke with a rotated/valid key.
+- Refresh Vercel auth, link the project, configure env vars, deploy, verify the deployed URL, then run live API-Football smoke with a rotated/valid key.
 
 ## 2026-06-18 - Master Pursue-Goal Handoff
 

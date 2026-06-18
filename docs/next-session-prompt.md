@@ -54,9 +54,7 @@ Do not mark the project production-ready until deployed browser proof and live/f
 - `.env.local` is absent.
 - `SPORTS_API_KEY` is not present in the shell.
 - `.vercel/project.json` is absent, so the project is not linked locally.
-- A local initial commit exists on `master`, but it has not been pushed.
-- The GitHub repo exists and is public, but it has no default branch until the local commit is pushed.
-- `git push -u origin master` needs explicit user approval because it publishes the full repo contents to the public remote.
+- The GitHub repo exists, is public, and `master` is now the default branch.
 - API-Football World Cup league id is not verified from a credentialed/provider dashboard source.
 - The API-Football docs page is Cloudflare/JS-gated in this environment, so endpoint assumptions still need primary-source confirmation.
 
@@ -79,25 +77,22 @@ Do not mark the project production-ready until deployed browser proof and live/f
    - `vercel whoami`,
    - `vercel link` status,
    - GitHub default branch/commit state.
-2. Push the local commit after explicit user approval:
-   - `git push -u origin master`
-   - confirm GitHub default branch is created.
-3. Refresh Vercel auth:
+2. Refresh Vercel auth:
    - run `vercel login` if needed,
    - link or create the Vercel project,
    - configure env vars with secret values redacted in logs/docs.
-4. Verify API-Football:
+3. Verify API-Football:
    - confirm World Cup 2026 league id,
    - run a live smoke against fixtures/standings,
    - confirm mapped `/api/tournament` validates,
    - document provider availability or truthful fallback.
-5. Deploy to Vercel:
+4. Deploy to Vercel:
    - verify `/`,
    - verify `/api/health`,
    - verify `/api/tournament`,
    - verify desktop and mobile browser behavior,
    - confirm the client bundle does not expose `SPORTS_API_KEY`.
-6. Update docs:
+5. Update docs:
    - `PLAN.md`,
    - `docs/BUILD-LOG.md`,
    - `docs/RUNBOOK.md`,
