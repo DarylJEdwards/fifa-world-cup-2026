@@ -1,0 +1,8 @@
+node_modules
+dist
+qa
+.vercel
+.env
+.env.local
+*.tsbuildinfo
+npm-debug.log*

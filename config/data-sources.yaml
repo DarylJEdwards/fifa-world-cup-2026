@@ -1,0 +1,34 @@
+# Machine-readable data-source ledger for the World Cup command center.
+# Keep this file current when source/provider state changes.
+
+version: 1
+updated_at: "2026-06-18"
+active_source: seed-cache
+
+sources:
+  seed-cache:
+    status: active
+    mode: local-fallback
+    files:
+      - src/data/seed.ts
+      - src/lib/standings.ts
+    notes:
+      - Development fallback data only.
+      - Not official live tournament truth.
+
+  live-provider:
+    status: adapter-implemented-not-live-smoked
+    mode: provider-adapter
+    provider: API-Football
+    base_url: https://v3.football.api-sports.io
+    required_env:
+      - SPORTS_PROVIDER
+      - SPORTS_API_BASE_URL
+      - SPORTS_API_KEY
+      - SPORTS_API_LEAGUE_ID
+      - SPORTS_API_SEASON
+    notes:
+      - API-Football key must stay in ignored local env or deployment secret storage.
+      - API-Football standings and fixtures envelopes now map into TournamentSnapshot when group data is complete.
+      - Provider cache TTL, stale fallback, timeout, and visible provider status are implemented locally.
+      - Do not claim official live data until API-Football league id, live data availability, quota policy, and smoke checks pass with real credentials.
