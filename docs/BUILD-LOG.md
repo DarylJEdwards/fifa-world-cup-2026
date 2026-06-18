@@ -2,6 +2,24 @@
 
 Append-only project history. Add new entries at the top.
 
+## 2026-06-18 - Vercel Plugin Auth Check
+
+### Focus
+
+Check whether the newly authenticated Vercel plugin unblocks deployment.
+
+### Validation
+
+- Vercel MCP/plugin auth works and lists the `Agent Impact Inc` team.
+- Vercel project discovery did not show an existing project for this app/repo.
+- Vercel plugin deploy action did not deploy directly; it returned guidance to run `vercel deploy`.
+- Local `vercel whoami` still reports no existing credentials.
+- `.vercel/project.json` is still absent, so the repo is not linked locally.
+
+### Next Action
+
+- Start a focused Vercel setup session: have Daryl complete local CLI login or dashboard Git import, create/link the project, configure env vars, deploy, and verify the deployed URL.
+
 ## 2026-06-18 - Provider, Product Surfaces, CI, And Vercel Scaffold
 
 ### Focus

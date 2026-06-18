@@ -4,7 +4,7 @@
 
 Finish the remaining live/deployment gates for the FIFA World Cup 2026 command center:
 
-- Refresh Vercel auth, link the project, configure env vars, deploy to Vercel, and verify the deployed URL.
+- Resolve Vercel deployment setup, link or create the project, configure env vars, deploy to Vercel, and verify the deployed URL.
 - Live-smoke API-Football with a valid server-side key and verified World Cup league id.
 - Keep docs and build log current with exact validation and deployment evidence.
 
@@ -51,6 +51,8 @@ Do not mark the project production-ready until deployed browser proof and live/f
 ## Known Blockers
 
 - `vercel whoami` reports: `Error: No existing credentials found. Please run vercel login or pass "--token"`.
+- Vercel MCP/plugin auth works and can list the `Agent Impact Inc` team (`team_fRYHdx2BuidBmB0InAL3NOho`), but the plugin deploy tool only returned CLI guidance: run `vercel deploy`.
+- Vercel project discovery for that team did not show a project for this app/repo yet.
 - `.env.local` is absent.
 - `SPORTS_API_KEY` is not present in the shell.
 - `.vercel/project.json` is absent, so the project is not linked locally.
@@ -76,23 +78,30 @@ Do not mark the project production-ready until deployed browser proof and live/f
    - check `SPORTS_API_KEY` presence without printing it,
    - `vercel whoami`,
    - `vercel link` status,
+   - Vercel MCP `list_teams` / project discovery if available,
    - GitHub default branch/commit state.
-2. Refresh Vercel auth:
-   - run `vercel login` if needed,
-   - link or create the Vercel project,
+2. Resolve Vercel setup with the user:
+   - if using CLI, have Daryl run `vercel login` locally and complete browser/email auth,
+   - if using dashboard/Git integration, have Daryl import `DarylJEdwards/fifa-world-cup-2026` into the `Agent Impact Inc` team,
+   - create or link the project from `C:\Users\daryl\home\projects\fifa-world-cup-2026`,
+   - confirm `.vercel/project.json` exists without committing it,
    - configure env vars with secret values redacted in logs/docs.
-3. Verify API-Football:
+3. Deploy to Vercel:
+   - use `vercel deploy --prod` or a Git integration production deployment,
+   - verify build logs if deployment fails,
+   - record the deployed URL.
+4. Verify API-Football:
    - confirm World Cup 2026 league id,
    - run a live smoke against fixtures/standings,
    - confirm mapped `/api/tournament` validates,
    - document provider availability or truthful fallback.
-4. Deploy to Vercel:
+5. Verify deployed app:
    - verify `/`,
    - verify `/api/health`,
    - verify `/api/tournament`,
    - verify desktop and mobile browser behavior,
    - confirm the client bundle does not expose `SPORTS_API_KEY`.
-5. Update docs:
+6. Update docs:
    - `PLAN.md`,
    - `docs/BUILD-LOG.md`,
    - `docs/RUNBOOK.md`,
