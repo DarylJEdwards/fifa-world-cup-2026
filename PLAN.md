@@ -80,6 +80,7 @@ This is the living planning surface. Keep it current as the project changes.
 - Add schema validation at the provider boundary. (Done with structural `TournamentSnapshot` validation; Zod or a stricter schema remains recommended.)
 - Add caching and stale-data behavior. (Done)
 - Add provider health/status display. (Done)
+- Add live-smoke automation behind secrets. (Done with `npm run smoke:provider` and manual/scheduled GitHub Actions provider-smoke job; credentialed run still blocked by missing key and unverified league id.)
 - Run a live API-Football smoke check with secrets loaded from ignored local env or deployment secret storage.
 - Update `config/data-sources.yaml` and rendered/reference docs when provider state changes.
 
@@ -89,6 +90,7 @@ This is the living planning surface. Keep it current as the project changes.
   - Vite static frontend plus same-origin Vercel Express API function. (Done)
 - Add production environment docs. (Done)
 - Add CI/CD. (Done)
+- Add manual Vercel deploy workflow with prebuilt deploy, deployed API smoke, and deployed-url browser smoke. (Done; credentialed run remains blocked until Vercel project secrets exist.)
 - Add health checks and basic observability.
 - Add release checklist and rollback notes.
 
@@ -104,6 +106,8 @@ This is the living planning surface. Keep it current as the project changes.
 - Live-provider smoke behind secrets remains required beyond the current mock provider coverage.
 - Preference persistence tests are still recommended.
 - Visual QA screenshots were generated during implementation; `qa/` is ignored and should stay out of git.
+- Vercel production deployment remains blocked until Daryl completes CLI login or dashboard Git import; `.vercel/project.json` is absent and connector project discovery did not find a matching FIFA project.
+- Manual GitHub Actions Vercel deploy workflow exists but cannot run until `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` repository secrets are configured.
 
 ## Active ADR Index
 

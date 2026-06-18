@@ -52,3 +52,26 @@ PROVIDER_STALE_TTL_SECONDS=600
 ```
 
 Do not commit `.env.local`. The API sends `x-apisports-key` server-side only. If a real API-Football key was pasted into chat history, rotate it before production use.
+
+After configuring a valid key and verified league id, run:
+
+```powershell
+npm run smoke:provider
+```
+
+The smoke command checks API-Football `leagues`, `fixtures`, and `standings` summaries and then runs the live standings/fixtures mapper into a `TournamentSnapshot`. It prints endpoint status, result counts, mapped group/match counts, and provider state without printing the key.
+
+For GitHub Actions provider smoke, configure these repository secrets:
+
+- `SPORTS_API_KEY`
+- `SPORTS_API_LEAGUE_ID`
+
+The workflow supplies non-secret defaults for `SPORTS_PROVIDER`, `SPORTS_API_BASE_URL`, `SPORTS_API_SEASON`, and `PROVIDER_TIMEOUT_MS`.
+
+For the manual Vercel deploy workflow, configure these repository secrets after the Vercel project exists:
+
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
+
+These values must not be committed. `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` can be read from `.vercel/project.json` after `vercel link` or `vercel pull`, but that local file should remain untracked.

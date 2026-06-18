@@ -4,6 +4,10 @@
 
 The app has a production frontend build via Vite and a Vercel serverless API entrypoint at `api/[...path].ts`.
 
+Vercel deployment is not complete yet. As of the latest preflight, local `vercel whoami` reports no existing credentials, `.vercel/project.json` is absent, and Vercel connector project discovery did not return a matching FIFA project under the `Agent Impact Inc` team. Local `vercel build` also cannot package yet because project settings are absent; run `vercel login`, then `vercel pull --yes` or deterministic `vercel link --yes --project fifa-world-cup-2026 --scope agentimpact`.
+
+Manual GitHub Actions deployment is scaffolded in `.github/workflows/vercel-deploy.yml`. It requires `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` repository secrets, deploys with Vercel prebuilt artifacts, runs `npm run smoke:deployed` against the deployment URL, and can run Playwright smoke against the deployment URL. Playwright can also verify an existing deployment locally by setting `PLAYWRIGHT_BASE_URL`.
+
 Current scripts:
 
 - `npm run build` checks TypeScript and builds `dist/`.

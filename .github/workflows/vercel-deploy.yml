@@ -1,0 +1,84 @@
+name: Vercel Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      production:
+        description: Deploy to production
+        required: false
+        default: true
+        type: boolean
+      run_browser_smoke:
+        description: Run Playwright smoke against the deployed URL
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Check Vercel secrets
+        shell: bash
+        run: |
+          missing=()
+          [ -n "$VERCEL_TOKEN" ] || missing+=("VERCEL_TOKEN")
+          [ -n "$VERCEL_ORG_ID" ] || missing+=("VERCEL_ORG_ID")
+          [ -n "$VERCEL_PROJECT_ID" ] || missing+=("VERCEL_PROJECT_ID")
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error::Missing required Vercel secrets: ${missing[*]}"
+            exit 1
+          fi
+
+      - name: Install
+        run: npm ci
+
+      - name: Quality gate
+        run: npm run test:ci
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@50.4.5
+
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=${{ inputs.production && 'production' || 'preview' }} --token="$VERCEL_TOKEN"
+
+      - name: Build with Vercel
+        run: vercel build ${{ inputs.production && '--prod' || '' }} --token="$VERCEL_TOKEN"
+
+      - name: Deploy prebuilt artifact
+        id: deploy
+        shell: bash
+        run: |
+          flags=("--prebuilt" "--token=$VERCEL_TOKEN")
+          if [ "${{ inputs.production }}" = "true" ]; then
+            flags+=("--prod")
+          fi
+          url="$(vercel deploy "${flags[@]}")"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Deployed URL: $url"
+
+      - name: API smoke against deployment
+        run: npm run smoke:deployed -- "${{ steps.deploy.outputs.url }}"
+
+      - name: Install Playwright browsers
+        if: inputs.run_browser_smoke
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser smoke against deployment
+        if: inputs.run_browser_smoke
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ steps.deploy.outputs.url }}
+        run: npm run test:browser

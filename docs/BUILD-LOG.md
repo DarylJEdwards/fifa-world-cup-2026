@@ -2,6 +2,61 @@
 
 Append-only project history. Add new entries at the top.
 
+## 2026-06-18 - Deployment Preflight And Validation Refresh
+
+### Focus
+
+Execute the deployment handoff as far as possible from the canonical checkout and refresh validation evidence before pausing on auth/secret blockers.
+
+### Validation
+
+- Local preflight:
+  - `git status --short --branch` reported `## master...origin/master` with no worktree changes.
+  - `git log --oneline -1` reported `d360a70 docs: add vercel setup handoff`.
+  - `.env.local` is absent.
+  - `SPORTS_API_KEY` is not present in the shell.
+  - `.vercel/project.json` is absent.
+  - `origin` points to `https://github.com/DarylJEdwards/fifa-world-cup-2026.git`.
+- External/project preflight:
+  - Vercel CLI `vercel whoami` still reports `Error: No existing credentials found. Please run vercel login or pass "--token"`.
+  - Vercel connector can list the `Agent Impact Inc` team (`team_fRYHdx2BuidBmB0InAL3NOho`).
+  - Vercel connector project discovery did not show a FIFA project in the returned project list.
+  - Vercel connector deploy tool returned CLI/Git integration guidance only; it did not create, link, or deploy the project.
+  - GitHub read-only probe verified `DarylJEdwards/fifa-world-cup-2026`, default branch `master`, pushed at `2026-06-18T16:14:58Z`.
+- Quality gates:
+  - `npm run lint` passed.
+  - Added `npm run smoke:provider` via `scripts/live-provider-smoke.ts`; it checks API-Football `leagues`, `fixtures`, and `standings` summaries and validates the live mapper without printing `SPORTS_API_KEY`.
+  - Added a manual/scheduled GitHub Actions provider-smoke job that runs `npm run smoke:provider` only when `SPORTS_API_KEY` and `SPORTS_API_LEAGUE_ID` repository secrets are present; otherwise it skips with a notice.
+  - Added a manual Vercel deploy workflow that runs `npm run test:ci`, `vercel pull`, `vercel build`, `vercel deploy --prebuilt`, and optional Playwright browser smoke against the deployed URL when `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` repository secrets are configured.
+  - Added `npm run smoke:deployed -- <deployment-url>` via `scripts/deployed-smoke.ts`; it checks `/`, `/api/health`, `/api/tournament`, validates the tournament shape, and scans generated JavaScript assets for the `SPORTS_API_KEY` literal.
+  - Wired the manual Vercel deploy workflow to run `npm run smoke:deployed` after deploy and before optional Playwright browser smoke.
+  - Updated Playwright config so `PLAYWRIGHT_BASE_URL` verifies a deployed URL without starting the local dev server; CI defaults to Chromium while local runs keep Edge unless overridden.
+  - `.github/workflows/ci.yml` and `.github/workflows/vercel-deploy.yml` parsed successfully with local PyYAML.
+  - `PLAYWRIGHT_BASE_URL=http://127.0.0.1:9 npx playwright test --list` listed 6 tests without starting the local web server.
+  - `npm run smoke:provider` initially hit Windows sandbox `spawn EPERM`; rerun outside the sandbox reached the intended missing-env guard for `SPORTS_API_KEY` and `SPORTS_API_LEAGUE_ID`.
+  - `npm run smoke:deployed` reached the intended missing-URL guard when no deployment URL was supplied.
+  - `npm run test` initially hit Windows sandbox `spawn EPERM`; rerun outside the sandbox passed with 21 tests across 2 files.
+  - `npm run build` passed.
+  - `npm run analyze` passed:
+    - main app chunk `377.6 kB / 500 kB`,
+    - async Three.js chunk `681.1 kB / 750 kB`.
+  - `npm run test:browser` passed with 6 Playwright checks across desktop and mobile.
+  - Client bundle scan found `SPORTS_API_KEY` references only in docs, tests, `.env.example`, config, and server code; no generated `dist/assets` match was found.
+
+### Blockers
+
+- Vercel deployment remains blocked because the local CLI is unauthenticated and the connector cannot deploy this project directly.
+- Local `vercel build` is also blocked before packaging because project settings are absent; it reported `No Project Settings found locally. Run vercel pull --yes to retrieve them.` Both `vercel pull --yes` and deterministic `vercel link --yes --project fifa-world-cup-2026 --scope agentimpact` fail first on missing CLI credentials.
+- Project linking remains blocked because `.vercel/project.json` is absent and no matching Vercel project was found by connector project discovery.
+- Manual GitHub Actions Vercel deploy remains inactive until `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` repository secrets are configured after project creation/linking.
+- Live API-Football smoke remains blocked because no API key is available locally or in the shell, and the World Cup 2026 league id still needs credentialed/provider-source verification.
+- Scheduled GitHub Actions provider smoke also remains inactive until `SPORTS_API_KEY` and `SPORTS_API_LEAGUE_ID` repository secrets are configured.
+
+### Next Action
+
+- Have Daryl complete Vercel CLI login or import the GitHub repo into the `Agent Impact Inc` team dashboard, then link/create the project, configure redacted env vars, deploy, and verify the deployed URL plus `/api/health` and `/api/tournament`.
+- Add/rotate a valid API-Football key outside git, verify the league id from a credentialed/provider source, then run fixtures/standings live smoke and document the truthful provider state.
+
 ## 2026-06-18 - Vercel Plugin Auth Check
 
 ### Focus

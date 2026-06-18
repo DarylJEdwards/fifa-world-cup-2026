@@ -31,10 +31,25 @@ npm run lint
 npm run test
 npm run build
 npm run analyze
+npm run smoke:provider
+npm run smoke:deployed -- https://<deployment-url>
 npm run test:browser
 ```
 
 Known Windows note: Vite/Vitest can hit `spawn EPERM` when esbuild is blocked by sandboxing. If that happens, rerun the same command with approval outside the sandbox.
+
+`npm run smoke:provider` is expected to fail fast when `SPORTS_API_KEY` or `SPORTS_API_LEAGUE_ID` is absent. It never prints the API key. Use it only after setting a valid API-Football key and verified World Cup league id in the shell or ignored local env.
+
+GitHub Actions also exposes a manual/scheduled provider-smoke job in `.github/workflows/ci.yml`. Configure repository secrets named `SPORTS_API_KEY` and `SPORTS_API_LEAGUE_ID` before using it for real provider checks. If either secret is absent, the job skips the smoke step with a notice.
+
+To run the browser smoke against a deployed URL instead of the local dev server, set `PLAYWRIGHT_BASE_URL`:
+
+```powershell
+$env:PLAYWRIGHT_BASE_URL = "https://<deployment-url>"
+npm run test:browser
+```
+
+`npm run smoke:deployed -- <deployment-url>` verifies the app root, `/api/health`, `/api/tournament`, and generated JavaScript assets for absence of the `SPORTS_API_KEY` literal.
 
 Current production shape: Vite builds the static frontend to `dist/`, and Vercel imports `api/[...path].ts` as a same-origin Express function for `/api/*`. Local development still uses `tsx watch`; do not deploy `tsx watch`.
 
@@ -84,6 +99,10 @@ SPORTS_API_SEASON=2026
 ```
 
 This session could not deploy because `vercel whoami` reported no existing credentials. Run `vercel login`, then `vercel link`, configure env vars with redacted values, and deploy.
+
+Latest local Vercel probe: `vercel build` cannot run until project settings are present and reported `No Project Settings found locally. Run vercel pull --yes to retrieve them.` Both `vercel pull --yes` and deterministic `vercel link --yes --project fifa-world-cup-2026 --scope agentimpact` currently fail first on missing CLI credentials.
+
+The repo also has a manual Vercel deploy workflow at `.github/workflows/vercel-deploy.yml`. Configure repository secrets named `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` after creating/linking the Vercel project. The workflow runs `npm run test:ci`, `vercel pull`, `vercel build`, `vercel deploy --prebuilt`, `npm run smoke:deployed`, and optional Playwright browser smoke against the deployed URL.
 
 ### App Shows Seed Cache
 

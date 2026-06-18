@@ -13,6 +13,8 @@
     "test:ci": "npm run lint && npm run test && npm run build",
     "test:browser": "playwright test",
     "analyze": "npm run build && node scripts/check-bundle-budget.mjs",
+    "smoke:provider": "tsx scripts/live-provider-smoke.ts",
+    "smoke:deployed": "tsx scripts/deployed-smoke.ts",
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {

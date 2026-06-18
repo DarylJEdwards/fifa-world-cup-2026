@@ -10,7 +10,7 @@ The app is designed as a broadcast-style command center: all 12 groups, live sta
 - Local seed-cache data renders all groups A-L.
 - Standings engine supports multi-team head-to-head tie groups and best-third-place ranking.
 - API-Football is selected; a server-side standings/fixtures mapper, cache TTL, stale fallback, timeout handling, and visible provider status are implemented.
-- Live API-Football smoke is still blocked until a local/deployment API key and verified World Cup league id are configured.
+- Live API-Football smoke automation exists behind env vars; the smoke is still blocked until a local/deployment API key and verified World Cup league id are configured.
 - Matches, Knockout, Teams, Players, Stats Hub, and Settings now render real product surfaces.
 - Local verification has passed `npm run lint`, `npm run test`, `npm run build`, `npm run analyze`, and `npm run test:browser`.
 - Vercel static frontend plus same-origin Express API function is scaffolded, but deployment is blocked until Vercel auth is refreshed.
@@ -36,9 +36,15 @@ Then open:
 - `npm run test` - runs Vitest.
 - `npm run build` - runs TypeScript build checks and Vite production build.
 - `npm run analyze` - builds and checks bundle budgets.
+- `npm run smoke:provider` - runs API-Football live endpoint and mapper smoke behind server-side env vars.
+- `npm run smoke:deployed -- <url>` - verifies a deployed app root, `/api/health`, `/api/tournament`, and client asset secret exposure.
 - `npm run test:ci` - runs lint, unit/API tests, and build.
 - `npm run test:browser` - runs Playwright desktop/mobile browser smoke and axe checks.
 - `npm run preview` - previews the built frontend.
+
+The GitHub Actions CI workflow also has a manual/scheduled provider-smoke job. It runs `npm run smoke:provider` only when `SPORTS_API_KEY` and `SPORTS_API_LEAGUE_ID` repository secrets are configured; otherwise it skips with a notice.
+
+The manual Vercel deploy workflow in `.github/workflows/vercel-deploy.yml` runs the CI gate, builds with Vercel, deploys a prebuilt artifact, runs deployed API smoke, and can run the same Playwright browser smoke against the deployed URL. It requires `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` repository secrets.
 
 ## Documentation Map
 
@@ -59,4 +65,4 @@ Then open:
 1. Verify API-Football World Cup league id, live data availability, quota behavior, and response shape with a real key.
 2. Refresh Vercel auth, link the project, configure env vars, deploy, and verify the deployed URL.
 3. Implement the full FIFA third-place pairing matrix.
-4. Add provider live-smoke automation behind secrets and deeper component/visual regression coverage.
+4. Add deeper component/visual regression coverage.
