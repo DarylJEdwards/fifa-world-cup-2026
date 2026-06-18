@@ -55,6 +55,9 @@ Do not mark the project production-ready until deployed browser proof and live/f
 - `npm run smoke:provider` is wired and fails safely without secrets: missing `SPORTS_API_KEY` and `SPORTS_API_LEAGUE_ID`; first sandbox run can hit the known `spawn EPERM` and should be rerun outside the sandbox.
 - `.github/workflows/ci.yml` parses as YAML and includes a separate provider-smoke job gated by repository secrets.
 - `.github/workflows/vercel-deploy.yml` parses as YAML and is ready once Vercel project secrets exist.
+- Deployment-smoke automation was committed and pushed as `c652900 ci: add deployment smoke automation`.
+- Remote `origin/master` was verified at `c652900583adf5ed492452510dbf38bf670e3040`.
+- GitHub lists both `CI` and `Vercel Deploy` workflows as active.
 - `npm run smoke:deployed` is wired and fails safely without a deployment URL.
 - `PLAYWRIGHT_BASE_URL=http://127.0.0.1:9 npx playwright test --list` listed the same 6 tests without starting a local web server, confirming deployed-URL mode is wired.
 - `npm run analyze` passed:

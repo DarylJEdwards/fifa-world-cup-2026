@@ -31,6 +31,9 @@ Execute the deployment handoff as far as possible from the canonical checkout an
   - Added `npm run smoke:deployed -- <deployment-url>` via `scripts/deployed-smoke.ts`; it checks `/`, `/api/health`, `/api/tournament`, validates the tournament shape, and scans generated JavaScript assets for the `SPORTS_API_KEY` literal.
   - Wired the manual Vercel deploy workflow to run `npm run smoke:deployed` after deploy and before optional Playwright browser smoke.
   - Updated Playwright config so `PLAYWRIGHT_BASE_URL` verifies a deployed URL without starting the local dev server; CI defaults to Chromium while local runs keep Edge unless overridden.
+  - Committed and pushed the deployment-smoke automation as `c652900 ci: add deployment smoke automation`.
+  - Verified remote `origin/master` at `c652900583adf5ed492452510dbf38bf670e3040`.
+  - Verified GitHub workflow list shows `CI` and `Vercel Deploy` active.
   - `.github/workflows/ci.yml` and `.github/workflows/vercel-deploy.yml` parsed successfully with local PyYAML.
   - `PLAYWRIGHT_BASE_URL=http://127.0.0.1:9 npx playwright test --list` listed 6 tests without starting the local web server.
   - `npm run smoke:provider` initially hit Windows sandbox `spawn EPERM`; rerun outside the sandbox reached the intended missing-env guard for `SPORTS_API_KEY` and `SPORTS_API_LEAGUE_ID`.
