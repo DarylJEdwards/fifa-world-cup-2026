@@ -2,6 +2,22 @@
 
 Append-only project history. Add new entries at the top.
 
+## 2026-06-20 - Vercel Plugin Deploy Attempt
+
+### Focus
+
+Try the connected Vercel plugin deploy path after explicit approval to create/deploy this app as a new Vercel project.
+
+### Validation
+
+- Canonical repo was clean at `C:\Users\daryl\home\projects\fifa-world-cup-2026` before the attempt.
+- Vercel plugin `_deploy_to_vercel` did not create or deploy a project; it returned guidance to run `vercel deploy` from the project root or use Git integration.
+- Vercel connector project discovery after the attempt still did not show a `fifa-world-cup-2026` project under `Agent Impact Inc` (`team_fRYHdx2BuidBmB0InAL3NOho`).
+
+### Blocker
+
+- The connected Vercel plugin is read/discovery-capable here, but its deploy helper does not perform the new-project deployment for this repo. The remaining Vercel path requires local CLI auth (`vercel login`) or dashboard/Git import, then secret configuration and deployment.
+
 ## 2026-06-20 - GitHub CI Browser Smoke Stabilization
 
 ### Focus

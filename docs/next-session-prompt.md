@@ -61,6 +61,7 @@ Do not mark the project complete until GitHub CI is green and the deployed URL i
   - `npm run analyze` with main app chunk `377.6 kB / 500 kB` and async Three.js chunk `681.1 kB / 750 kB`.
   - `npm run test:browser` with 6 passed across desktop and mobile.
 - Read-only Vercel connector discovery still shows only the `Agent Impact Inc` team (`team_fRYHdx2BuidBmB0InAL3NOho`) and no `fifa-world-cup-2026` project in the returned project list.
+- Vercel plugin deploy attempt after explicit approval returned CLI/Git guidance only; it did not create or deploy a `fifa-world-cup-2026` project.
 - `gh secret list --repo DarylJEdwards/fifa-world-cup-2026` still returned no secret names.
 - `.env.local` and `.vercel/project.json` remain absent locally, and this shell still has no `SPORTS_API_KEY` or `SPORTS_API_LEAGUE_ID`.
 
@@ -89,6 +90,7 @@ Do not mark the project complete until GitHub CI is green and the deployed URL i
   - Local CLI still reports no credentials: `vercel whoami` says to run `vercel login` or pass `--token`.
   - Prior connector evidence showed Vercel connector authentication for team `Agent Impact Inc` / `agentimpact` / `team_fRYHdx2BuidBmB0InAL3NOho`.
   - Prior connector project list did not show a `fifa-world-cup-2026` project.
+  - Approved Vercel plugin `_deploy_to_vercel` attempt returned guidance to run `vercel deploy` or use Git integration; follow-up project discovery still did not show a FIFA project.
   - The closest project, `agent-command-center` (`prj_ygXk8QNyfQ9QPSI06Pen7oPHsgux`), is not this repo. Its latest deployment metadata points to GitHub repo `Agent-Impact/agent-command-center`, branch `main`.
 - Implemented project capabilities:
   - React/Vite/TypeScript command center renders full product screens.
@@ -141,7 +143,7 @@ Use subagents or parallel read-only commands where useful, but keep one lead res
    - If the fix is a test harness timeout/CI stability adjustment, document why it is valid and keep the browser-visible assertions intact.
 
 2. Vercel project setup
-   - Use Vercel connector first for read-only discovery.
+   - Use Vercel connector first for read-only discovery; do not rely on `_deploy_to_vercel` for this repo because the approved attempt returned CLI/Git guidance only and did not create a project.
    - Treat `agent-command-center` as a different project unless new evidence proves otherwise.
    - Create/import/link a project specifically for `DarylJEdwards/fifa-world-cup-2026` under team `agentimpact`.
    - If using local CLI, have Daryl complete `vercel login`, then run `vercel link` or `vercel pull`.
