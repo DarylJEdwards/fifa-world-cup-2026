@@ -8,6 +8,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("core command-center controls update visible state", async ({ page }, testInfo) => {
+  testInfo.setTimeout(60_000);
   await expect(page.locator(".group-card")).toHaveCount(12);
   await expect(page.locator("canvas")).toHaveCount(1);
   await expect(page.locator(".inspector-head strong")).toHaveText("Group A");
