@@ -39,19 +39,19 @@ Do not mark the project complete until GitHub CI is green and the deployed URL i
 
    ```powershell
    gh run list --repo DarylJEdwards/fifa-world-cup-2026 --limit 5
-   gh run view 27870134215 --repo DarylJEdwards/fifa-world-cup-2026 --json name,event,createdAt,headSha,headBranch,status,conclusion,url,jobs
+   gh run view 27870250695 --repo DarylJEdwards/fifa-world-cup-2026 --json name,event,createdAt,headSha,headBranch,status,conclusion,url,jobs
    gh secret list --repo DarylJEdwards/fifa-world-cup-2026
    ```
 
 4. If any secret mutation, Vercel project creation/linking, provider account work, deployment mutation, or destructive cleanup becomes necessary, stop and ask Daryl explicitly before doing it.
 
-## Latest Progress As Of 2026-06-20 07:45 Toronto
+## Latest Progress As Of 2026-06-20 07:55 Toronto
 
 - CI repair is complete and pushed.
 - Commits pushed to `master`:
   - `64996f4 test: stabilize mobile command center smoke`
   - `9ee856d test: allow slower core browser smoke`
-- GitHub Actions `CI` run `27870134215` succeeded on `master` for commit `9ee856d2b2493da796e7a2b09f7abb623edb11ab`.
+- GitHub Actions `CI` run `27870250695` succeeded on `master` for commit `3024d01fd65266e0c97ca7dfc40f6223b480db87` after the docs handoff update. The earlier code-fix run `27870134215` also succeeded for `9ee856d2b2493da796e7a2b09f7abb623edb11ab`.
 - The successful `quality` job passed install, lint, unit/API tests, build, bundle budget, Playwright browser install, and browser smoke.
 - Local validation after the CI fix passed:
   - `npx playwright test tests/e2e/command-center.spec.ts --project=mobile --repeat-each=3 --trace=on` with 9 passed.
@@ -69,17 +69,17 @@ Do not mark the project complete until GitHub CI is green and the deployed URL i
 - Local repo state:
   - The canonical checkout is `C:\Users\daryl\home\projects\fifa-world-cup-2026`.
   - At this handoff refresh, `git status --short --branch` reports `## master...origin/master` with docs changes being prepared for commit.
-  - Latest pushed code commit is `9ee856d test: allow slower core browser smoke`.
+  - Latest pushed commit is `3024d01 docs: record green ci handoff`; latest code commit is `9ee856d test: allow slower core browser smoke`.
   - `.env.local` is absent.
   - `.vercel/project.json` is absent.
   - This shell does not have `SPORTS_API_KEY` or `SPORTS_API_LEAGUE_ID`.
 - GitHub Actions:
-  - Latest run checked: `27870134215`.
+  - Latest run checked: `27870250695`.
   - Workflow: `CI`.
   - Event: push.
-  - Created: `2026-06-20T11:43:30Z`.
-  - Head SHA: `9ee856d2b2493da796e7a2b09f7abb623edb11ab`.
-  - Run URL: `https://github.com/DarylJEdwards/fifa-world-cup-2026/actions/runs/27870134215`.
+  - Created: `2026-06-20T11:48:30Z`.
+  - Head SHA: `3024d01fd65266e0c97ca7dfc40f6223b480db87`.
+  - Run URL: `https://github.com/DarylJEdwards/fifa-world-cup-2026/actions/runs/27870250695`.
   - `quality` job succeeded, including install, lint, unit/API tests, build, bundle budget, Playwright browser install, and browser smoke.
   - `provider-smoke` was skipped for the push event as designed; live provider smoke still requires repository secrets and a scheduled/manual trigger.
 - GitHub secrets:
@@ -210,7 +210,7 @@ Ask Daryl before:
 
 The goal is complete only when all are true:
 
-- Latest GitHub Actions `CI` run on `master` passes. (Done: run `27870134215` succeeded for `9ee856d2b2493da796e7a2b09f7abb623edb11ab`.)
+- Latest GitHub Actions `CI` run on `master` passes. (Done: run `27870250695` succeeded for `3024d01fd65266e0c97ca7dfc40f6223b480db87`.)
 - The mobile Playwright timeout is fixed with trace-backed evidence.
 - Correct Vercel project is linked or imported for `DarylJEdwards/fifa-world-cup-2026`.
 - Required Vercel and provider secrets are configured without exposure.
