@@ -45,7 +45,7 @@ test("core command-center controls update visible state", async ({ page }, testI
   const noHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);
   expect(noHorizontalOverflow).toBe(true);
 
-  await page.screenshot({ path: testInfo.outputPath("command-center.png"), fullPage: true });
+  await page.screenshot({ path: testInfo.outputPath("command-center.png"), animations: "disabled" });
 });
 
 test("navigation opens every product section", async ({ page }) => {
