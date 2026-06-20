@@ -2,6 +2,39 @@
 
 Append-only project history. Add new entries at the top.
 
+## 2026-06-20 - GitHub CI Browser Smoke Stabilization
+
+### Focus
+
+Fix the failing GitHub Actions browser smoke while preserving the desktop/mobile command-center assertions.
+
+### Changes
+
+- Replaced the final full-page proof screenshot in `tests/e2e/command-center.spec.ts` with a viewport screenshot using disabled animations; the previous CI failure happened after assertions while taking the evidence screenshot.
+- Set the broad core command-center Playwright smoke timeout to 60 seconds because Ubuntu CI showed desktop taking about 28 seconds and mobile exceeding the default 30-second test timeout before the refresh assertion completed.
+
+### Validation
+
+- Focused local mobile repeat passed: `npx playwright test tests/e2e/command-center.spec.ts --project=mobile --repeat-each=3 --trace=on` with 9 passed.
+- `npm run lint` passed.
+- `npm run test` passed with 21 tests across 2 files.
+- `npm run build` passed.
+- `npm run analyze` passed: main app chunk `377.6 kB / 500 kB`; async Three.js chunk `681.1 kB / 750 kB`.
+- `npm run test:browser` passed with 6 Playwright checks across desktop and mobile.
+- Pushed commits:
+  - `64996f4 test: stabilize mobile command center smoke`
+  - `9ee856d test: allow slower core browser smoke`
+- GitHub Actions `CI` run `27870134215` on `master` succeeded for commit `9ee856d2b2493da796e7a2b09f7abb623edb11ab`; quality passed install, lint, unit/API tests, build, bundle budget, Playwright browser install, and browser smoke.
+
+### Remaining Blockers
+
+- Vercel deployment remains blocked until a correct `fifa-world-cup-2026` Vercel project is created/linked under `Agent Impact Inc` and `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` are configured as repository secrets.
+- Live API-Football smoke remains blocked until a valid key and verified World Cup 2026 league id are available through approved secret surfaces and configured as `SPORTS_API_KEY` and `SPORTS_API_LEAGUE_ID`.
+
+### Next Action
+
+- Create/link the Vercel project, configure redacted Vercel/provider secrets, run live provider smoke, deploy, and verify the deployed URL with API and desktop/mobile browser proof.
+
 ## 2026-06-18 - Deployment Preflight And Validation Refresh
 
 ### Focus

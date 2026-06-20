@@ -22,6 +22,7 @@ This is the living planning surface. Keep it current as the project changes.
   - `npm run build` passes.
   - Main app chunk is below the 500 kB warning threshold; the async Three.js vendor chunk has an explicit 750 kB budget.
   - Browser-visible proof covered desktop/mobile interaction checks, screenshots in ignored `qa/`, and an in-app Browser check for canvas, group selection, planned nav status, and overflow.
+  - GitHub Actions `CI` run `27870134215` passed on `master` at commit `9ee856d2b2493da796e7a2b09f7abb623edb11ab`, including browser smoke.
 
 ## Guardrails
 
