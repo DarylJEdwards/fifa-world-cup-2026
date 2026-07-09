@@ -13,12 +13,16 @@ This is the living planning surface. Keep it current as the project changes.
 - Preferences persist locally: selected group, favorites, theme, layout, timezone, refresh interval, and reduced-motion toggle.
 - Matches, Knockout, Teams, Players, Stats Hub, and Settings render dedicated product screens; Players truthfully reports unavailable stat feeds when only seed data is active.
 - Visible command-center timestamps honor the timezone preference; venue time currently uses an Eastern-time placeholder until match-specific venue timezone mapping exists.
+- Vercel project `prj_aMFdokxUDii1IGQQGkxi5rhHkn6Q` is linked and production is live at <https://fifa-world-cup-2026-umber-five.vercel.app>.
+- Production deployment `dpl_dNTHSp3eCQJnphC1c1WfBsKSJGpt` is `READY`; the one-hour post-deploy runtime-error scan was clean.
 - Current verification:
   - `npm run lint` passes.
-  - `npm run test` passes with 21 tests.
-  - `npm run test:browser` passes with 6 Playwright checks across desktop and mobile.
+  - `npm run test` passes with 26 tests across standings, preferences, API contracts, provider caching, and failure fallback.
+  - `npm run typecheck:vercel` passes and models Vercel's NodeNext serverless compiler.
+  - `npm run test:browser` passes with 8 Playwright checks across desktop and mobile, including persistence across reload.
   - `npm run analyze` passes bundle budgets.
-  - In-app Browser proof covered desktop/mobile section navigation, provider status, canvas render, and no horizontal overflow.
+  - Production API smoke passes every public API route family, expected team 404 behavior, and client asset secret scanning.
+  - Production browser proof passes the full desktop/mobile Playwright suite.
   - `npm run build` passes.
   - Main app chunk is below the 500 kB warning threshold; the async Three.js vendor chunk has an explicit 750 kB budget.
   - Browser-visible proof covered desktop/mobile interaction checks, screenshots in ignored `qa/`, and an in-app Browser check for canvas, group selection, planned nav status, and overflow.
@@ -53,6 +57,9 @@ This is the living planning surface. Keep it current as the project changes.
 ### Phase 3 - Comprehensive Test Suite
 
 - Added standings tests for mini-table reapplication, four-team overall fallback, fair-play fallback, FIFA-rank fallback, and third-place slot eligibility. (Done)
+- Added preference-store tests for defaults, every mutation, favorites, and fresh-instance rehydration. (Done)
+- Added a NodeNext serverless type-check gate that reproduces Vercel's function compiler locally. (Done)
+- Added deployed smoke coverage for every public API route family and client-secret scanning. (Done)
 - Added API contract tests for seed-cache route shapes, team 404s, API-Football mock mapping, missing config, malformed fallback, auth/quota/non-200 fallback, timeout fallback, empty/incomplete data fallback, and stale-cache refresh failure. (Done)
 - Added Playwright browser tests for desktop/mobile controls, planned nav labels, screenshots, keyboard focus, and serious/critical axe checks. (Done)
 - Expand standings unit tests:
@@ -91,7 +98,9 @@ This is the living planning surface. Keep it current as the project changes.
   - Vite static frontend plus same-origin Vercel Express API function. (Done)
 - Add production environment docs. (Done)
 - Add CI/CD. (Done)
-- Add manual Vercel deploy workflow with prebuilt deploy, deployed API smoke, and deployed-url browser smoke. (Done; credentialed run remains blocked until Vercel project secrets exist.)
+- Add manual Vercel deploy workflow with prebuilt deploy, deployed API smoke, and deployed-url browser smoke. (Done)
+- Create/link the Agent Impact Vercel project and deploy production. (Done 2026-07-09)
+- Verify production API, client-secret scan, desktop/mobile browser flows, and post-deploy runtime errors. (Done 2026-07-09)
 - Add health checks and basic observability.
 - Add release checklist and rollback notes.
 
@@ -103,12 +112,10 @@ This is the living planning surface. Keep it current as the project changes.
 - Knockout projection uses eligible third-place pools, but does not yet implement the full FIFA Annex C third-place pairing matrix.
 - Player statistics are unavailable in seed-cache mode; the Players screen intentionally avoids fabricated leaderboards until provider player endpoints are enabled.
 - Venue timezone is currently a command-center placeholder, not match-venue-specific formatting.
-- Production API path is Vercel serverless via `api/[...path].ts`; local `tsx watch` remains development-only.
+- Production API paths use Vercel serverless entrypoints at `api/[...path].ts` plus `api/teams/[id].ts`; local `tsx watch` remains development-only.
 - Live-provider smoke behind secrets remains required beyond the current mock provider coverage.
-- Preference persistence tests are still recommended.
 - Visual QA screenshots were generated during implementation; `qa/` is ignored and should stay out of git.
-- Vercel production deployment remains blocked until Daryl completes CLI login or dashboard Git import; `.vercel/project.json` is absent and connector project discovery did not find a matching FIFA project.
-- Manual GitHub Actions Vercel deploy workflow exists but cannot run until `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` repository secrets are configured.
+- The manual GitHub Actions Vercel deploy workflow still needs `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` repository secrets before use; direct CLI production deployment is working.
 
 ## Active ADR Index
 

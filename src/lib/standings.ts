@@ -1,5 +1,5 @@
-import { groupCodes, matches, teams } from "../data/seed";
-import type { GroupStanding, KnockoutSlot, Match, StandingRow, Team, ThirdPlaceRow, TournamentSnapshot } from "../types";
+import { groupCodes, matches, teams } from "../data/seed.js";
+import type { GroupStanding, KnockoutSlot, Match, StandingRow, Team, ThirdPlaceRow, TournamentSnapshot } from "../types.js";
 
 const fairPlaySeed: Record<string, number> = Object.fromEntries(
   teams.map((team, index) => [team.id, -((index % 4) + (team.fifaRank % 3))])
@@ -148,7 +148,7 @@ function groupRows<T>(rows: T[], keyFor: (row: T) => string): T[][] {
   const groups: T[][] = [];
   rows.forEach((row) => {
     const key = keyFor(row);
-    const lastGroup = groups.at(-1);
+    const lastGroup = groups[groups.length - 1];
     if (lastGroup && keyFor(lastGroup[0]) === key) {
       lastGroup.push(row);
     } else {

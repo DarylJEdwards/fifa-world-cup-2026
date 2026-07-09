@@ -1,6 +1,6 @@
-# Goal Prompt: Finish Vercel And Live Provider Deployment
+# Next Goal Prompt: Activate Live Tournament Provider Data
 
-You are Codex. Use the pursue goal function and finish this end to end from the canonical checkout:
+Production deployment and the comprehensive release suite are complete. Continue the remaining provider-data work from the canonical checkout:
 
 `C:\Users\daryl\home\projects\fifa-world-cup-2026`
 
@@ -8,17 +8,15 @@ Do not use the OneDrive/Documents checkout except as a read-only comparison if e
 
 ## Goal
 
-Make the FIFA World Cup 2026 command center deployment-ready and truthfully live:
+Keep the production command center healthy while activating verified tournament data:
 
-- preserve the now-green GitHub Actions CI while finishing deployment,
-- create or link the correct Vercel project for `DarylJEdwards/fifa-world-cup-2026`,
-- configure Vercel/GitHub secrets without printing or committing secret values,
-- discover and verify the correct live provider league id using the available API-Football key, or document and implement a better provider alternative if API-Football cannot serve the needed World Cup 2026 data,
-- deploy to Vercel,
-- verify the deployed app, API, provider status, and browser behavior,
-- update docs with exact evidence.
+- obtain a valid API-Football key only through an approved secret surface,
+- verify the correct World Cup 2026 league id and live response shape,
+- configure Vercel provider environment variables without printing or committing secrets,
+- run provider, deployed API, and production browser smoke,
+- preserve the comprehensive release suite and update exact evidence.
 
-Do not mark the project complete until GitHub CI is green and the deployed URL is verified on desktop and mobile.
+Current production URL: <https://fifa-world-cup-2026-umber-five.vercel.app>.
 
 ## Start Protocol
 
@@ -45,7 +43,17 @@ Do not mark the project complete until GitHub CI is green and the deployed URL i
 
 4. If any secret mutation, Vercel project creation/linking, provider account work, deployment mutation, or destructive cleanup becomes necessary, stop and ask Daryl explicitly before doing it.
 
-## Latest Progress As Of 2026-06-20 07:55 Toronto
+## Latest Progress As Of 2026-07-09 16:24 Toronto
+
+- Vercel project `prj_aMFdokxUDii1IGQQGkxi5rhHkn6Q` is linked under `Agent Impact Inc`.
+- Production deployment `dpl_dNTHSp3eCQJnphC1c1WfBsKSJGpt` is `READY` in `iad1`.
+- Production URL: <https://fifa-world-cup-2026-umber-five.vercel.app>.
+- `npm run test:comprehensive` passed with 26 Vitest tests, the Vercel NodeNext compiler gate, production build and bundle budgets, and 8 desktop/mobile Playwright checks.
+- Expanded production smoke passed every public API route family and client bundle secret scanning.
+- All 8 Playwright scenarios passed against production; the post-deploy runtime-error scan was clean.
+- Provider state remains truthful `missing-config` seed-cache fallback because no approved provider key or verified league id was available.
+
+### Historical Baseline From 2026-06-20
 
 - CI repair is complete and pushed.
 - Commits pushed to `master`:
@@ -65,7 +73,7 @@ Do not mark the project complete until GitHub CI is green and the deployed URL i
 - `gh secret list --repo DarylJEdwards/fifa-world-cup-2026` still returned no secret names.
 - `.env.local` and `.vercel/project.json` remain absent locally, and this shell still has no `SPORTS_API_KEY` or `SPORTS_API_LEAGUE_ID`.
 
-## Current Evidence As Of 2026-06-20
+## Historical Evidence As Of 2026-06-20 (Superseded)
 
 - Local repo state:
   - The canonical checkout is `C:\Users\daryl\home\projects\fifa-world-cup-2026`.
@@ -142,7 +150,7 @@ Use subagents or parallel read-only commands where useful, but keep one lead res
    - Trigger or wait for GitHub Actions and confirm `CI` passes on `master`.
    - If the fix is a test harness timeout/CI stability adjustment, document why it is valid and keep the browser-visible assertions intact.
 
-2. Vercel project setup
+2. Vercel project setup (done 2026-07-09)
    - Use Vercel connector first for read-only discovery; do not rely on `_deploy_to_vercel` for this repo because the approved attempt returned CLI/Git guidance only and did not create a project.
    - Treat `agent-command-center` as a different project unless new evidence proves otherwise.
    - Create/import/link a project specifically for `DarylJEdwards/fifa-world-cup-2026` under team `agentimpact`.
@@ -170,7 +178,7 @@ Use subagents or parallel read-only commands where useful, but keep one lead res
      - `SPORTS_API_KEY`
      - `SPORTS_API_LEAGUE_ID`
 
-4. Deployment and deployed proof
+4. Deployment and deployed proof (done 2026-07-09)
    - Deploy through the manual Vercel workflow or Vercel Git integration once CI and project setup are correct.
    - Record the deployment URL.
    - Run:

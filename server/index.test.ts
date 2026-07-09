@@ -12,6 +12,9 @@ describe("World Cup API contract", () => {
     delete process.env.SPORTS_PROVIDER;
     delete process.env.PROVIDER_CACHE_TTL_SECONDS;
     delete process.env.PROVIDER_STALE_TTL_SECONDS;
+    delete process.env.PROVIDER_TIMEOUT_MS;
+    delete process.env.SPORTS_API_LEAGUE_ID;
+    delete process.env.SPORTS_API_SEASON;
     resetProviderCacheForTests();
     vi.restoreAllMocks();
   });
@@ -58,6 +61,42 @@ describe("World Cup API contract", () => {
       expect(await response.json()).toEqual({ error: "Team not found" });
     } finally {
       await stopServer(api.server);
+    }
+  });
+
+  it("reports missing provider configuration while serving the complete seed fallback", async () => {
+    process.env.SPORTS_PROVIDER = "API-Football";
+    const api = await startServer(createApp());
+    try {
+      const tournament = await getJson<TournamentSnapshot>(`${api.baseUrl}/api/tournament`);
+      expect(tournament.source).toBe("seed-cache");
+      expect(tournament.providerName).toBe("API-Football");
+      expect(tournament.providerStatus.state).toBe("missing-config");
+      expect(tournament.providerStatus.detail).toContain("SPORTS_API_KEY");
+      expect(tournament.groups).toHaveLength(12);
+    } finally {
+      await stopServer(api.server);
+    }
+  });
+
+  it("serves a fresh provider snapshot from cache without duplicate upstream requests", async () => {
+    let providerRequests = 0;
+    const provider = await startServer((request: IncomingMessage, response: ServerResponse) => {
+      providerRequests += 1;
+      response.setHeader("content-type", "application/json");
+      response.end(JSON.stringify(request.url?.startsWith("/standings") ? apiFootballStandingsEnvelope() : apiFootballFixturesEnvelope()));
+    });
+    process.env.SPORTS_API_BASE_URL = provider.baseUrl;
+    process.env.SPORTS_API_KEY = "test-key";
+    process.env.PROVIDER_CACHE_TTL_SECONDS = "60";
+    const api = await startServer(createApp());
+    try {
+      expect((await getJson<TournamentSnapshot>(`${api.baseUrl}/api/tournament`)).providerStatus.state).toBe("live");
+      expect((await getJson<TournamentSnapshot>(`${api.baseUrl}/api/tournament`)).providerStatus.state).toBe("live");
+      expect(providerRequests).toBe(2);
+    } finally {
+      await stopServer(api.server);
+      await stopServer(provider.server);
     }
   });
 

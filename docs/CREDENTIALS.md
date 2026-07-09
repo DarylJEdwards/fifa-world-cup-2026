@@ -32,7 +32,7 @@ No secrets are stored in this repo.
 
 ## Provider Setup Status
 
-Current status: API-Football has been selected and a server-side mapper/cache path exists for standings and fixtures envelopes. Live production use is not verified yet because this session had no local `SPORTS_API_KEY`, no `.env.local`, and Vercel auth was invalid.
+Current status: production is deployed and verified, but API-Football remains unconfigured because no approved `SPORTS_API_KEY` or verified World Cup league id was available. Vercel therefore serves truthful seed-cache fallback with `missing-config` provider state.
 
 The app currently uses seed-cache fallback data unless API-Football env vars are configured. The UI shows provider/cache state rather than claiming official live data.
 
@@ -68,10 +68,10 @@ For GitHub Actions provider smoke, configure these repository secrets:
 
 The workflow supplies non-secret defaults for `SPORTS_PROVIDER`, `SPORTS_API_BASE_URL`, `SPORTS_API_SEASON`, and `PROVIDER_TIMEOUT_MS`.
 
-For the manual Vercel deploy workflow, configure these repository secrets after the Vercel project exists:
+The Vercel project now exists under the Agent Impact team. To enable the manual GitHub Actions deployment workflow, configure these repository secrets:
 
 - `VERCEL_TOKEN`
 - `VERCEL_ORG_ID`
 - `VERCEL_PROJECT_ID`
 
-These values must not be committed. `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` can be read from `.vercel/project.json` after `vercel link` or `vercel pull`, but that local file should remain untracked.
+These values must not be committed. `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` are available in ignored `.vercel/project.json`; that local file must remain untracked.

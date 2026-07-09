@@ -33,6 +33,30 @@ if (!isTournamentSnapshot(tournament)) {
 console.log(`tournamentGroups=${tournament.groups.length}`);
 console.log(`tournamentProviderState=${tournament.providerStatus.state}`);
 
+const groups = await fetchJson<unknown[]>(new URL("/api/groups", baseUrl), "api/groups");
+if (!Array.isArray(groups) || groups.length !== 12) {
+  throw new Error("/api/groups did not return all 12 groups");
+}
+
+const matches = await fetchJson<unknown[]>(new URL("/api/matches", baseUrl), "api/matches");
+if (!Array.isArray(matches) || matches.length === 0) {
+  throw new Error("/api/matches did not return matches");
+}
+
+const standings = await fetchJson<unknown[]>(new URL("/api/standings", baseUrl), "api/standings");
+if (!Array.isArray(standings) || standings.length !== 12) {
+  throw new Error("/api/standings did not return all 12 group tables");
+}
+
+const teamId = tournament.groups[0]?.rows[0]?.team.id;
+if (!teamId) throw new Error("Tournament snapshot did not contain a team id");
+const team = await fetchJson<{ id?: unknown }>(new URL(`/api/teams/${teamId}`, baseUrl), "api/team");
+if (team.id !== teamId) {
+  throw new Error("/api/teams/:id returned the wrong team");
+}
+
+await fetchExpectedStatus(new URL("/api/teams/not-a-team", baseUrl), "api/missing-team", 404);
+
 await assertClientBundleDoesNotExposeSecret(baseUrl, html);
 
 console.log("deployed smoke passed");
@@ -59,6 +83,14 @@ async function fetchJson<T>(url: URL, label: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+async function fetchExpectedStatus(url: URL, label: string, expectedStatus: number): Promise<void> {
+  const response = await fetch(url);
+  console.log(`${label}Status=${response.status}`);
+  if (response.status !== expectedStatus) {
+    throw new Error(`${label} returned ${response.status}; expected ${expectedStatus}`);
+  }
+}
+
 async function assertClientBundleDoesNotExposeSecret(baseUrl: URL, html: string): Promise<void> {
   const assetPaths = [...html.matchAll(/<script[^>]+src="([^"]+\.js)"/g)].map((match) => match[1]);
   if (assetPaths.length === 0) {
@@ -82,10 +114,22 @@ function normalizeUrl(value: string): URL {
   return url;
 }
 
-function isTournamentSnapshot(value: unknown): value is { groups: unknown[]; providerStatus: { state: string } } {
+interface DeployedTournamentSnapshot {
+  groups: Array<{
+    rows: Array<{
+      team: {
+        id: string;
+      };
+    }>;
+  }>;
+  providerStatus: { state: string };
+}
+
+function isTournamentSnapshot(value: unknown): value is DeployedTournamentSnapshot {
   if (!value || typeof value !== "object") return false;
   const snapshot = value as { groups?: unknown; providerStatus?: unknown; lastUpdated?: unknown };
   if (!Array.isArray(snapshot.groups) || snapshot.groups.length !== 12) return false;
+  if (!snapshot.groups.every((group) => hasTeamId(group))) return false;
   if (typeof snapshot.lastUpdated !== "string") return false;
   if (!snapshot.providerStatus || typeof snapshot.providerStatus !== "object") return false;
   const status = snapshot.providerStatus as { state?: unknown; provider?: unknown; detail?: unknown; checkedAt?: unknown };
@@ -95,4 +139,15 @@ function isTournamentSnapshot(value: unknown): value is { groups: unknown[]; pro
     typeof status.detail === "string" &&
     typeof status.checkedAt === "string"
   );
+}
+
+function hasTeamId(value: unknown): boolean {
+  if (!value || typeof value !== "object") return false;
+  const group = value as { rows?: unknown };
+  if (!Array.isArray(group.rows) || group.rows.length !== 4) return false;
+  return group.rows.every((row) => {
+    if (!row || typeof row !== "object") return false;
+    const team = (row as { team?: unknown }).team;
+    return Boolean(team && typeof team === "object" && typeof (team as { id?: unknown }).id === "string");
+  });
 }

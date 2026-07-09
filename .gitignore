@@ -6,3 +6,6 @@ qa
 .env.local
 *.tsbuildinfo
 npm-debug.log*
+
+.vercel
+.env*.local

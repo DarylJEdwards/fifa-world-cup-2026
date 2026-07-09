@@ -2,8 +2,9 @@ import { expect, test } from "@playwright/test";
 import axe from "axe-core";
 
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => localStorage.clear());
   await page.goto("/");
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
   await expect(page.getByText("Live Tournament Orbit")).toBeVisible({ timeout: 20_000 });
 });
 
@@ -47,6 +48,22 @@ test("core command-center controls update visible state", async ({ page }, testI
   expect(noHorizontalOverflow).toBe(true);
 
   await page.screenshot({ path: testInfo.outputPath("command-center.png"), animations: "disabled" });
+});
+
+test("preferences survive a full page reload", async ({ page }) => {
+  await page.locator('button[data-group="L"]').click();
+  await page.getByLabel("Theme").selectOption("gold");
+  await page.getByLabel("Layout").selectOption("compact");
+  await page.getByLabel("Timezone").selectOption("utc");
+  await page.getByRole("button", { name: "Toggle reduced motion" }).click();
+
+  await page.reload();
+  await expect(page.getByText("Live Tournament Orbit")).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator(".inspector-head strong")).toHaveText("Group L");
+  await expect(page.locator(".app-shell")).toHaveClass(/theme-gold/);
+  await expect(page.locator(".app-shell")).toHaveClass(/layout-compact/);
+  await expect(page.locator(".app-shell")).toHaveClass(/reduce-motion/);
+  await expect(page.getByLabel("Timezone")).toHaveValue("utc");
 });
 
 test("navigation opens every product section", async ({ page }) => {

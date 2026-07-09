@@ -2,6 +2,36 @@
 
 Append-only project history. Add new entries at the top.
 
+## 2026-07-09 - Production Deployment And Comprehensive Test Suite
+
+### Focus
+
+Create and link the dedicated Vercel project, fix production-only serverless defects, expand the release suite, deploy, and prove the final production artifact.
+
+### Changes
+
+- Created and linked `agentimpact/fifa-world-cup-2026`; `.vercel` and local environment files remain ignored.
+- Added explicit `.js` ESM imports, the Vercel NodeNext type-check gate, and an explicit nested team-route function.
+- Added API cache/config tests, preference-store tests, reload-level browser coverage, and broader deployed smoke coverage.
+
+### Validation
+
+- `npm run test:comprehensive` passed: ESLint, 26 Vitest tests, Vercel type-checking, production builds, bundle budgets, and 8 desktop/mobile Playwright scenarios.
+- Production smoke passed every public API route family, expected missing-team 404 behavior, and generated asset secret scanning.
+- The full 8-case Playwright suite passed against production; the post-deploy Vercel runtime-error scan returned no errors.
+
+### Deployment
+
+- Project: `prj_aMFdokxUDii1IGQQGkxi5rhHkn6Q`.
+- Deployment: `dpl_dNTHSp3eCQJnphC1c1WfBsKSJGpt` (`READY`, production, `iad1`).
+- Production URL: <https://fifa-world-cup-2026-umber-five.vercel.app>.
+- Vercel deployment URL (team-authenticated): <https://fifa-world-cup-2026-cce1q10t9-agentimpact.vercel.app>.
+- Provider state: truthful `missing-config` seed-cache fallback; no provider secret was exposed.
+
+### Next Action
+
+- Configure a valid API-Football key and verified World Cup league id in Vercel, run live provider smoke, then enable the scheduled provider workflow if desired.
+
 ## 2026-06-20 - Vercel Plugin Deploy Attempt
 
 ### Focus

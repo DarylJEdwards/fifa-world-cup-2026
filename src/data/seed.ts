@@ -1,4 +1,4 @@
-import type { GroupCode, Match, Team } from "../types";
+import type { GroupCode, Match, Team } from "../types.js";
 
 const profiles = {
   manager: "Tournament staff",

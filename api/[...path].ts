@@ -1,3 +1,3 @@
-import { createApp } from "../server/index";
+import { createApp } from "../server/index.js";
 
 export default createApp();

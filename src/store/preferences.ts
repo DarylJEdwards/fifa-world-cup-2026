@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 import type { GroupCode, UserPreferences } from "../types";
 
 interface PreferenceState extends UserPreferences {
@@ -35,6 +35,9 @@ export const usePreferences = create<PreferenceState>()(
       setRefreshSeconds: (refreshSeconds) => set({ refreshSeconds }),
       setReducedMotion: (reducedMotion) => set({ reducedMotion })
     }),
-    { name: "wc26-command-center-preferences" }
+    {
+      name: "wc26-command-center-preferences",
+      storage: createJSONStorage(() => globalThis.localStorage)
+    }
   )
 );

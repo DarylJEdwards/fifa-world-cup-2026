@@ -1,8 +1,8 @@
 import cors from "cors";
 import express from "express";
-import { buildTournamentSnapshot } from "../src/lib/standings";
-import type { ProviderStatus, TournamentSnapshot } from "../src/types";
-import { loadApiFootballSnapshot } from "./provider/apiFootball";
+import { buildTournamentSnapshot } from "../src/lib/standings.js";
+import type { ProviderStatus, TournamentSnapshot } from "../src/types.js";
+import { loadApiFootballSnapshot } from "./provider/apiFootball.js";
 
 const port = Number(process.env.PORT ?? 4174);
 let providerCache: { snapshot: TournamentSnapshot; fetchedAt: number; staleUntil: number } | undefined;

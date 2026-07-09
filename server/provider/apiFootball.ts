@@ -1,6 +1,6 @@
-import { groupCodes, matches as seedMatches, teams as seedTeams } from "../../src/data/seed";
-import { buildKnockoutSlots, rankThirdPlaceTeams } from "../../src/lib/standings";
-import type { GroupCode, GroupStanding, Match, StandingRow, Team, TournamentSnapshot } from "../../src/types";
+import { groupCodes, matches as seedMatches, teams as seedTeams } from "../../src/data/seed.js";
+import { buildKnockoutSlots, rankThirdPlaceTeams } from "../../src/lib/standings.js";
+import type { GroupCode, GroupStanding, Match, StandingRow, Team, TournamentSnapshot } from "../../src/types.js";
 
 interface ApiFootballConfig {
   baseUrl: string;

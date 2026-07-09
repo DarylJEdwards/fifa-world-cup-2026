@@ -27,14 +27,18 @@ $env:LIVE_REFRESH_SECONDS = "30"
 ## Validation Commands
 
 ```powershell
+npm run test:comprehensive
 npm run lint
 npm run test
+npm run typecheck:vercel
 npm run build
 npm run analyze
 npm run smoke:provider
 npm run smoke:deployed -- https://<deployment-url>
 npm run test:browser
 ```
+
+`npm run test:comprehensive` is the one-shot local release gate: lint, 26 unit/API tests, Vercel serverless type-checking, production builds, bundle budgets, and 8 desktop/mobile Playwright checks.
 
 Known Windows note: Vite/Vitest can hit `spawn EPERM` when esbuild is blocked by sandboxing. If that happens, rerun the same command with approval outside the sandbox.
 
@@ -49,9 +53,9 @@ $env:PLAYWRIGHT_BASE_URL = "https://<deployment-url>"
 npm run test:browser
 ```
 
-`npm run smoke:deployed -- <deployment-url>` verifies the app root, `/api/health`, `/api/tournament`, and generated JavaScript assets for absence of the `SPORTS_API_KEY` literal.
+`npm run smoke:deployed -- <deployment-url>` verifies the app root, all public API route families, valid and missing-team behavior, and generated JavaScript assets for absence of the `SPORTS_API_KEY` literal.
 
-Current production shape: Vite builds the static frontend to `dist/`, and Vercel imports `api/[...path].ts` as a same-origin Express function for `/api/*`. Local development still uses `tsx watch`; do not deploy `tsx watch`.
+Current production shape: Vite builds the static frontend to `dist/`, and Vercel imports `api/[...path].ts` plus `api/teams/[id].ts` as same-origin Express functions. Local development still uses `tsx watch`; do not deploy `tsx watch`.
 
 ## Browser Proof
 
@@ -87,6 +91,9 @@ Configured files:
 
 - `vercel.json`
 - `api/[...path].ts`
+- `api/teams/[id].ts`
+
+Production URL: <https://fifa-world-cup-2026-umber-five.vercel.app>
 
 Required production env vars for live provider mode:
 
@@ -98,11 +105,9 @@ SPORTS_API_LEAGUE_ID=<verified-world-cup-league-id>
 SPORTS_API_SEASON=2026
 ```
 
-This session could not deploy because `vercel whoami` reported no existing credentials. Run `vercel login`, then `vercel link`, configure env vars with redacted values, and deploy.
+Vercel CLI is authenticated and the canonical checkout is linked to `agentimpact/fifa-world-cup-2026`. Direct production deployment and aliasing are working. Keep `.vercel` and `.env.local` ignored.
 
-Latest local Vercel probe: `vercel build` cannot run until project settings are present and reported `No Project Settings found locally. Run vercel pull --yes to retrieve them.` Both `vercel pull --yes` and deterministic `vercel link --yes --project fifa-world-cup-2026 --scope agentimpact` currently fail first on missing CLI credentials.
-
-The repo also has a manual Vercel deploy workflow at `.github/workflows/vercel-deploy.yml`. Configure repository secrets named `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` after creating/linking the Vercel project. The workflow runs `npm run test:ci`, `vercel pull`, `vercel build`, `vercel deploy --prebuilt`, `npm run smoke:deployed`, and optional Playwright browser smoke against the deployed URL.
+The repo also has a manual Vercel deploy workflow at `.github/workflows/vercel-deploy.yml`. Configure repository secrets named `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` to enable it.
 
 ### App Shows Seed Cache
 
