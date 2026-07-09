@@ -65,6 +65,6 @@ Responsibilities:
 ## Current Architecture Risks
 
 - The 3D stage is code-split, but Three.js remains a large async vendor chunk with a documented 750 kB budget.
-- API-Football live smoke still needs real credentials and a verified World Cup league id.
-- Knockout projection does not fully implement the official third-place pairing matrix.
-- Seed data includes synthetic fair-play values.
+- API-Football live smoke still needs a real credential in the production secret store.
+- The full official third-place pairing matrix is implemented and exhaustively tested.
+- Seed mode carries no fabricated results, live states, or player leaderboards.

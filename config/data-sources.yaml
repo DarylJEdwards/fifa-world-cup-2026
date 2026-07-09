@@ -2,7 +2,7 @@
 # Keep this file current when source/provider state changes.
 
 version: 1
-updated_at: "2026-06-18"
+updated_at: "2026-07-09"
 active_source: seed-cache
 
 sources:
@@ -17,7 +17,7 @@ sources:
       - Not official live tournament truth.
 
   live-provider:
-    status: adapter-implemented-not-live-smoked
+    status: adapter-complete-awaiting-production-secret
     mode: provider-adapter
     provider: API-Football
     base_url: https://v3.football.api-sports.io
@@ -29,6 +29,8 @@ sources:
       - SPORTS_API_SEASON
     notes:
       - API-Football key must stay in ignored local env or deployment secret storage.
-      - API-Football standings and fixtures envelopes now map into TournamentSnapshot when group data is complete.
-      - Provider cache TTL, stale fallback, timeout, and visible provider status are implemented locally.
-      - Do not claim official live data until API-Football league id, live data availability, quota policy, and smoke checks pass with real credentials.
+      - League 1 and season 2026 are enforced for the FIFA World Cup.
+      - A provider snapshot is accepted only with all 104 fixtures, including 72 group and 32 knockout matches.
+      - Scores, penalties, statuses, standings, match stages, team profiles, and optional player leaderboards map into TournamentSnapshot.
+      - Automatic refresh is 15 seconds live and 300 seconds idle; degraded browser retries are 30 seconds and optional player endpoints cache for 15 minutes.
+      - Do not claim official live data until production provider and deployed live-mode smoke checks pass with real credentials.

@@ -2,6 +2,32 @@
 
 Append-only project history. Add new entries at the top.
 
+## 2026-07-09 - Complete Tournament Model, Product Sections, And Refresh Pipeline
+
+### Focus
+
+Find every demo, partial, or placeholder product surface; complete it; and harden automatic score/result updates before redeploying.
+
+### Changes
+
+- Replaced the partial/fabricated seed with a truthful 104-match structural schedule covering 72 group and 32 knockout matches.
+- Added the current 48-team group field, canonical match stages/statuses, official Round of 32 formulas, and all 495 Annexe C third-place combinations.
+- Rebuilt Matches, Groups, Knockout, Teams, Players, Stats Hub, and Settings as complete responsive workflows.
+- Hardened API-Football mapping for league `1` / season `2026`: complete-fixture validation, scores, penalties, statuses, stage mapping, standings, provider IDs, and optional player leaderboards.
+- Added adaptive automatic refresh: 15 seconds live, 300 seconds idle, 30 seconds degraded, plus a quota-safe 15-minute optional-player cache.
+- Added strict health/freshness/capability/build-SHA reporting and a composed live production verifier.
+
+### Validation
+
+- `npm run test:ci` passed: lint, 43 Vitest tests, Vercel NodeNext type-checking, and production build.
+- `npm run analyze` passed: main app 408.0 kB / 500 kB; async Three.js 681.1 kB / 750 kB.
+- `npm run test:browser` passed 10/10 across desktop and mobile, including all sections, persistence, keyboard behavior, responsiveness, and serious/critical axe checks.
+- In-app Browser visual review passed at 1440x1000 and 390x844 with no console warnings/errors or page-level horizontal overflow.
+
+### Remaining Gate
+
+- Production live mode still needs a valid Vercel `SPORTS_API_KEY`. After it is added, deploy and run `npm run verify:production -- <url> --mode=live --expected-sha=<sha>`.
+
 ## 2026-07-09 - Production Deployment And Comprehensive Test Suite
 
 ### Focus

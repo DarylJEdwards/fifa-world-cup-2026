@@ -1,20 +1,28 @@
-# Next Goal Prompt: Activate Live Tournament Provider Data
+# Next Goal Prompt: Ship The Complete Live-Data Build
 
-Production deployment and the comprehensive release suite are complete. Continue the remaining provider-data work from the canonical checkout:
+The complete 104-match product rebuild and comprehensive local release suite are green. Continue only the remaining secret, deployment, and live-production gates from the canonical checkout:
 
 `C:\Users\daryl\home\projects\fifa-world-cup-2026`
 
 Do not use the OneDrive/Documents checkout except as a read-only comparison if explicitly needed. Default to auto review. Use subagents or parallel read-only commands heavily for CI/log triage, test diagnosis, docs drift checks, Vercel/GitHub discovery, and validation planning, while keeping one lead responsible for integration and final claims.
+
+## Current Evidence
+
+- Current local commit: `db79811 feat: complete tournament data and product sections`.
+- Local gate: 43 Vitest tests, Vercel type-check, production build, bundle budgets, and 10 desktop/mobile Playwright scenarios all pass.
+- Automatic refresh: 15 seconds live, 300 seconds idle, 30 seconds degraded, optional player endpoints cached 15 minutes.
+- Production URL: <https://fifa-world-cup-2026-umber-five.vercel.app>.
+- Production is still on the previous `missing-config` build and must not be called live until the provider key and strict verifier pass.
 
 ## Goal
 
 Keep the production command center healthy while activating verified tournament data:
 
 - obtain a valid API-Football key only through an approved secret surface,
-- verify the correct World Cup 2026 league id and live response shape,
+- verify API-Football league `1`, season `2026`, returns the complete 104-fixture tournament shape,
 - configure Vercel provider environment variables without printing or committing secrets,
 - run provider, deployed API, and production browser smoke,
-- preserve the comprehensive release suite and update exact evidence.
+- deploy the current commit and pass the strict live production verifier.
 
 Current production URL: <https://fifa-world-cup-2026-umber-five.vercel.app>.
 
@@ -43,15 +51,15 @@ Current production URL: <https://fifa-world-cup-2026-umber-five.vercel.app>.
 
 4. If any secret mutation, Vercel project creation/linking, provider account work, deployment mutation, or destructive cleanup becomes necessary, stop and ask Daryl explicitly before doing it.
 
-## Latest Progress As Of 2026-07-09 16:24 Toronto
+## Latest Progress As Of 2026-07-09
 
 - Vercel project `prj_aMFdokxUDii1IGQQGkxi5rhHkn6Q` is linked under `Agent Impact Inc`.
 - Production deployment `dpl_dNTHSp3eCQJnphC1c1WfBsKSJGpt` is `READY` in `iad1`.
 - Production URL: <https://fifa-world-cup-2026-umber-five.vercel.app>.
-- `npm run test:comprehensive` passed with 26 Vitest tests, the Vercel NodeNext compiler gate, production build and bundle budgets, and 8 desktop/mobile Playwright checks.
+- `npm run test:comprehensive` passed with 43 Vitest tests, the Vercel NodeNext compiler gate, production build and bundle budgets, and 10 desktop/mobile Playwright checks.
 - Expanded production smoke passed every public API route family and client bundle secret scanning.
-- All 8 Playwright scenarios passed against production; the post-deploy runtime-error scan was clean.
-- Provider state remains truthful `missing-config` seed-cache fallback because no approved provider key or verified league id was available.
+- The previous deployment passed its 8-scenario Playwright suite and post-deploy runtime-error scan; the current 10-scenario suite still must pass after redeploy.
+- Provider state remains truthful `missing-config` because no approved provider key is available.
 
 ### Historical Baseline From 2026-06-20
 
@@ -165,8 +173,8 @@ Use subagents or parallel read-only commands where useful, but keep one lead res
 3. Provider league-id and data verification
    - Locate the API-Football key only in approved secret surfaces: shell env, ignored `.env.local`, GitHub/Vercel secrets, or a fresh value supplied by Daryl. Do not print it.
    - If no local key is available, ask Daryl for the key to be placed in `.env.local` or the shell, not pasted into docs.
-   - Use the key to discover the provider league id from live API-Football endpoints. Start with API-Football league discovery for World Cup/FIFA World Cup and season `2026`.
-   - Set `SPORTS_API_LEAGUE_ID` only after live evidence confirms the league id and response shape.
+   - Use league `1`, season `2026`, then verify the credentialed live response contains the complete 104-fixture competition before deployment.
+   - Keep `SPORTS_API_LEAGUE_ID=1`; the adapter rejects any other competition.
    - Run:
 
      ```powershell

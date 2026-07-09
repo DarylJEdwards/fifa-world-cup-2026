@@ -10,7 +10,7 @@ Existing coverage includes:
 - Playwright screenshot artifacts.
 - Axe checks for critical and serious accessibility violations.
 
-Current gap: no React component tests, no preference persistence tests, no live-provider smoke behind secrets, and no baseline-driven visual regression snapshots. CI workflow now exists.
+Current suite: 43 Vitest tests across tournament structure, all 495 Annexe C combinations, standings, preferences, adaptive polling, API contracts, provider caching/fallback, and optional player capabilities; plus 10 Playwright scenarios across desktop and mobile. The remaining gate is credentialed live-provider and deployed-live verification.
 
 ## Unit Tests
 
@@ -24,7 +24,7 @@ Current `src/lib/standings.test.ts` coverage includes:
 - best-third-place qualification count,
 - third-place knockout slot eligibility.
 
-Recommended remaining coverage:
+Additional non-blocking coverage:
 
 - points ranking,
 - head-to-head goal difference,
@@ -34,7 +34,7 @@ Recommended remaining coverage:
 - zero-score matches,
 - malformed seed fixtures.
 
-Add preference-store tests for:
+Preference-store coverage includes:
 
 - selected group,
 - favorites,
@@ -91,7 +91,7 @@ Current coverage:
 - empty or incomplete tournament data fallback,
 - stale provider cache after refresh failure.
 
-Recommended remaining coverage:
+Remaining external coverage:
 
 - live-provider smoke with real credentials,
 - schema drift checks against real API-Football responses.
@@ -126,7 +126,8 @@ Current desktop and mobile coverage:
 - inspector update,
 - refresh,
 - settings controls,
-- planned/deferred nav labels,
+- all seven product sections,
+- 104-match filters, 32-slot bracket, 48-team directory, player availability states, stats telemetry, and settings persistence,
 - topbar menu state,
 - reduced-motion state,
 - screenshots,

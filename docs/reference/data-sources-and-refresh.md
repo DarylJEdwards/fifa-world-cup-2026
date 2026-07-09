@@ -2,28 +2,30 @@
 
 ## Current Source
 
-Current default mode: seed cache, with API-Football adapter available when server-side env vars are configured.
+Current default mode: truthful structural seed cache, with a strict API-Football adapter for league `1`, season `2026` when server-side env vars are configured.
 
 Source files:
 
 - `src/data/seed.ts`
+- `src/data/annexC.ts`
 - `src/lib/standings.ts`
+- `src/lib/tournament.ts`
 
 ## Refresh Behavior
 
-The frontend uses TanStack Query and refreshes according to the persisted preference. The default refresh interval is 30 seconds.
+The frontend uses TanStack Query and follows provider freshness: 15 seconds during live play, 300 seconds while idle, and 30 seconds while degraded.
 
-The API uses provider cache TTL and stale fallback when provider env vars are configured. If provider configuration is absent or invalid, it returns seed-cache data with visible provider status.
+The API uses the same 15/300-second adaptive cache policy, a 600-second stale window, and a 15-minute cache for optional player leaderboards. Missing or invalid provider data returns a visibly labeled structural fallback; it is never merged into a provider snapshot.
 
 ## Provider Integration Requirements
 
 Before enabling real live data:
 
-1. Verify API-Football World Cup league id and final 2026 data availability.
+1. Configure a valid API-Football key and verify the complete 104-fixture live response.
 2. Document provider terms, cost, quota, endpoints, and rate limits.
 3. Store keys only in environment/deployment secret storage.
 4. Live-smoke the provider mapper and cache/fallback behavior.
-5. Add contract tests for auth, quota, timeout, non-200, malformed, and empty payloads.
+5. Keep contract tests for auth, quota, timeout, non-200, malformed, wrong-competition, and incomplete payloads green.
 
 ## Source Ledger
 

@@ -6,7 +6,7 @@
 - 3D trophy/stadium stage using Three.js and React Three Fiber.
 - All 12 groups A-L shown in the group orbit and qualification rail.
 - Selected-group inspector with standings, metrics, next/live match panel, and tiebreaker ladder.
-- Best-third-place race and partial road-to-final projection.
+- Best-third-place race and complete road-to-final bracket.
 - Local preferences for selected group, favorites, theme, layout, timezone, refresh interval, and reduced motion.
 - Express API routes for health, tournament snapshot, groups, matches, standings, and team lookup.
 - Seed-cache fallback data across 48 teams and seeded matches.
@@ -14,16 +14,16 @@
 - Dedicated screens for Matches, Knockout, Teams, Players, Stats Hub, and Settings.
 - Vercel static frontend plus same-origin Express API function scaffold.
 - CI workflow for install, lint, unit/API tests, build, bundle budget, and browser smoke.
+- Complete 104-match schedule model with 72 group and 32 knockout matches.
+- Full Round of 32 formulas and exhaustive 495-row Annexe C validation.
+- Search/filter workflows for matches and teams, complete bracket, team details, player leaderboards, tournament telemetry, and preference reset.
+- Adaptive provider/browser refresh: 15 seconds live, 300 seconds idle, 30 seconds degraded.
 
 ## Not Yet Implemented
 
-- Live API-Football smoke with real credentials and verified World Cup league id.
-- Full 104-match schedule and complete Round of 32 bracket model.
-- Full FIFA third-place pairing matrix.
-- Player statistics and leaderboards.
-- Team profile pages beyond the inspector summary fields.
-- Deployed Vercel URL verification.
-- Provider player endpoints and live stat leaderboards.
+- Credentialed API-Football smoke against the current live tournament response.
+- Vercel provider secret configuration and strict live-mode deployment verification.
+- Provider-backed player leaderboards when API-Football exposes those endpoints for the competition.
 
 ## Product Risk Notes
 
@@ -33,8 +33,6 @@
 
 ## Recommended Scope Order
 
-1. Refresh Vercel auth, configure secrets, deploy, and verify.
-2. Live-smoke API-Football league id and response shape.
-3. Add provider 429/5xx/timeout/stale contract tests.
-4. Implement full FIFA third-place pairing matrix.
-5. Add provider player endpoints and real player leaderboards.
+1. Configure the Vercel provider secret without exposure.
+2. Pass provider smoke, deploy the current commit, and pass live production verification.
+3. Enable scheduled provider smoke and alerting if desired.

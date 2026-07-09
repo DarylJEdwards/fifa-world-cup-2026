@@ -35,10 +35,11 @@ npm run build
 npm run analyze
 npm run smoke:provider
 npm run smoke:deployed -- https://<deployment-url>
+npm run verify:production -- https://<deployment-url> --mode=live --expected-sha=<git-sha>
 npm run test:browser
 ```
 
-`npm run test:comprehensive` is the one-shot local release gate: lint, 26 unit/API tests, Vercel serverless type-checking, production builds, bundle budgets, and 8 desktop/mobile Playwright checks.
+`npm run test:comprehensive` is the one-shot local release gate: lint, 43 unit/API tests, Vercel serverless type-checking, production builds, bundle budgets, and 10 desktop/mobile Playwright checks.
 
 Known Windows note: Vite/Vitest can hit `spawn EPERM` when esbuild is blocked by sandboxing. If that happens, rerun the same command with approval outside the sandbox.
 
@@ -68,7 +69,7 @@ Checklist:
 - Click a group card and confirm the inspector changes.
 - Use inspector previous/next controls.
 - Toggle favorites, theme, layout, timezone, and reduced motion.
-- Confirm topbar menu expansion and planned/deferred nav labels.
+- Confirm topbar menu expansion and every product-section navigation flow.
 - Check desktop and mobile widths.
 - Confirm the 3D stage/canvas is nonblank.
 - Confirm no incoherent overlap, clipping, or horizontal page overflow.
@@ -101,8 +102,11 @@ Required production env vars for live provider mode:
 SPORTS_PROVIDER=api-football
 SPORTS_API_BASE_URL=https://v3.football.api-sports.io
 SPORTS_API_KEY=<api-football-key>
-SPORTS_API_LEAGUE_ID=<verified-world-cup-league-id>
+SPORTS_API_LEAGUE_ID=1
 SPORTS_API_SEASON=2026
+PROVIDER_LIVE_CACHE_TTL_SECONDS=15
+PROVIDER_IDLE_CACHE_TTL_SECONDS=300
+PROVIDER_STALE_TTL_SECONDS=600
 ```
 
 Vercel CLI is authenticated and the canonical checkout is linked to `agentimpact/fifa-world-cup-2026`. Direct production deployment and aliasing are working. Keep `.vercel` and `.env.local` ignored.
@@ -112,6 +116,14 @@ The repo also has a manual Vercel deploy workflow at `.github/workflows/vercel-d
 ### App Shows Seed Cache
 
 This is expected until a provider is configured and live smoke checks pass. The UI should show seed/cache or missing-config status rather than claiming official live data.
+
+### Automatic Scores Do Not Update
+
+1. Check `/api/health`: `ready` must be `true`, `providerStatus.state` must be `live`, and `buildSha` must match the deployed commit.
+2. Check `/api/tournament`: it must contain exactly 104 matches and provider freshness metadata.
+3. During a live match, `nextRefreshSeconds` should be 15; while idle it should be 300.
+4. Run `npm run verify:production -- <url> --mode=live --expected-sha=<sha>`.
+5. If the provider fails, the UI must say stale/fallback; it must never show the structural seed schedule as live official results.
 
 ### Provider Returns Bad Data
 

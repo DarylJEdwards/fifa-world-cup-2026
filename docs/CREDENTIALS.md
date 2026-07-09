@@ -10,12 +10,14 @@ No secrets are stored in this repo.
 | `SPORTS_PROVIDER` | No | Provider label shown in API health and UI. Defaults to `seed`. |
 | `SPORTS_API_BASE_URL` | Only for live provider | Provider endpoint used by the API proxy. |
 | `SPORTS_API_KEY` | Only for live provider | Provider API key. Never commit this. |
-| `SPORTS_API_LEAGUE_ID` | Only for live provider | API-Football league id for the FIFA World Cup. Defaults to `1` until verified. |
+| `SPORTS_API_LEAGUE_ID` | Only for live provider | API-Football FIFA World Cup league id. Must be `1`. |
 | `SPORTS_API_SEASON` | Only for live provider | Provider season. Defaults to `2026`. |
 | `LIVE_REFRESH_SECONDS` | No | Intended refresh interval default. Current client preference defaults to 30 seconds. |
 | `CORS_ORIGIN` | Production recommended | Restricts browser origins allowed to call the API if frontend/API are split. |
 | `PROVIDER_TIMEOUT_MS` | Production recommended | Maximum provider request time before fallback. |
-| `PROVIDER_CACHE_TTL_SECONDS` | Production recommended | Fresh cache window for provider data. |
+| `PROVIDER_LIVE_CACHE_TTL_SECONDS` | No | Live-match cache window. Defaults to 15 seconds. |
+| `PROVIDER_IDLE_CACHE_TTL_SECONDS` | No | Idle cache window. Defaults to 300 seconds. |
+| `PROVIDER_CACHE_TTL_SECONDS` | No | Legacy override for both live and idle TTLs. |
 | `PROVIDER_STALE_TTL_SECONDS` | Production recommended | Stale-while-revalidate window. |
 | `LOG_LEVEL` | Production recommended | Backend logging verbosity. |
 | `SENTRY_DSN` | Optional | Error tracking. Do not expose secrets client-side. |
@@ -32,7 +34,7 @@ No secrets are stored in this repo.
 
 ## Provider Setup Status
 
-Current status: production is deployed and verified, but API-Football remains unconfigured because no approved `SPORTS_API_KEY` or verified World Cup league id was available. Vercel therefore serves truthful seed-cache fallback with `missing-config` provider state.
+Current status: API-Football league `1`, season `2026` is implemented and validated, but Production has no approved `SPORTS_API_KEY`. Vercel therefore serves truthful structural fallback with `missing-config` provider state.
 
 The app currently uses seed-cache fallback data unless API-Football env vars are configured. The UI shows provider/cache state rather than claiming official live data.
 
@@ -43,11 +45,12 @@ PORT=4174
 SPORTS_PROVIDER=api-football
 SPORTS_API_BASE_URL=https://v3.football.api-sports.io
 SPORTS_API_KEY=<api-football-key>
-SPORTS_API_LEAGUE_ID=<verified-world-cup-league-id>
+SPORTS_API_LEAGUE_ID=1
 SPORTS_API_SEASON=2026
 LIVE_REFRESH_SECONDS=30
 PROVIDER_TIMEOUT_MS=8000
-PROVIDER_CACHE_TTL_SECONDS=60
+PROVIDER_LIVE_CACHE_TTL_SECONDS=15
+PROVIDER_IDLE_CACHE_TTL_SECONDS=300
 PROVIDER_STALE_TTL_SECONDS=600
 ```
 

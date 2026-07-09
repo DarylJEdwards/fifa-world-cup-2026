@@ -6,15 +6,14 @@ The app is designed as a broadcast-style command center: all 12 groups, live sta
 
 ## Current Status
 
-- Greenfield app scaffolded and functional.
-- Local seed-cache data renders all groups A-L.
-- Standings engine supports multi-team head-to-head tie groups and best-third-place ranking.
-- API-Football is selected; a server-side standings/fixtures mapper, cache TTL, stale fallback, timeout handling, and visible provider status are implemented.
-- Live API-Football smoke automation exists behind env vars; the smoke is still blocked until a local/deployment API key and verified World Cup league id are configured.
-- Matches, Knockout, Teams, Players, Stats Hub, and Settings now render real product surfaces.
-- `npm run test:comprehensive` passes with 26 Vitest unit/API cases, the Vercel NodeNext compiler gate, production builds and bundle budgets, and 8 Playwright desktop/mobile checks.
-- Production is live at <https://fifa-world-cup-2026-umber-five.vercel.app> with all API routes and browser flows verified.
-- Production truthfully serves seed-cache fallback with `missing-config` provider state until API-Football credentials and a verified league id are configured.
+- Complete canonical tournament structure: 104 matches, 48 teams, 12 groups, and all 32 knockout slots.
+- Official Round of 32 formulas include exhaustive validation of all 495 Annexe C third-place combinations.
+- The fallback schedule contains no invented scores, winners, live matches, or player statistics.
+- API-Football league `1`, season `2026` is strictly validated server-side and must return all 104 fixtures before the app reports live data.
+- Automatic refresh is adaptive: 15 seconds during live matches, 300 seconds while idle, and 30 seconds during degraded recovery. Optional player leaderboards are cached for 15 minutes.
+- Matches, Groups, Knockout, Teams, Players, Stats Hub, and Settings are complete, responsive product surfaces.
+- `npm run test:comprehensive` passes with 43 Vitest cases, the Vercel compiler gate, production builds and bundle budgets, and 10 desktop/mobile Playwright scenarios.
+- The current production URL is <https://fifa-world-cup-2026-umber-five.vercel.app>. It remains an honest `missing-config` fallback until the provider key is added and the current build passes live production verification.
 
 ## Quick Start
 
@@ -34,12 +33,13 @@ Then open:
 - `npm run dev:api` - starts only the API proxy.
 - `npm run dev:web` - starts only the Vite frontend.
 - `npm run lint` - runs ESLint.
-- `npm run test` - runs the 26-case Vitest unit/API suite.
+- `npm run test` - runs the 43-case Vitest unit/API suite.
 - `npm run typecheck:vercel` - models Vercel's NodeNext serverless compiler locally.
 - `npm run build` - runs TypeScript build checks and Vite production build.
 - `npm run analyze` - builds and checks bundle budgets.
 - `npm run smoke:provider` - runs API-Football live endpoint and mapper smoke behind server-side env vars.
 - `npm run smoke:deployed -- <url>` - verifies the app root, all public API route families, expected team 404 behavior, and client asset secret exposure.
+- `npm run verify:production -- <url> --mode=live --expected-sha=<sha>` - composes the strict deployed API/asset smoke and the full desktop/mobile Playwright suite.
 - `npm run test:ci` - runs lint, unit/API tests, Vercel serverless type-checking, and the production build.
 - `npm run test:browser` - runs Playwright desktop/mobile browser smoke and axe checks.
 - `npm run test:comprehensive` - runs the complete local release gate.
@@ -65,7 +65,6 @@ The manual Vercel deploy workflow in `.github/workflows/vercel-deploy.yml` runs 
 
 ## Required Next Steps
 
-1. Configure API-Football credentials in Vercel, verify the World Cup league id and live response shape, and run `npm run smoke:provider`.
-2. Add Vercel/provider GitHub secrets if the manual deployment and scheduled provider workflows should be enabled.
-3. Implement the full FIFA third-place pairing matrix.
-4. Add screenshot-diff visual regression coverage if pixel-level UI locking becomes valuable.
+1. Add `SPORTS_API_KEY` to Vercel Production through an approved secret surface.
+2. Run `npm run smoke:provider`, deploy the current commit, and run `verify:production` in `live` mode.
+3. Add provider/Vercel GitHub secrets if scheduled provider smoke and manual workflow deployment are desired.

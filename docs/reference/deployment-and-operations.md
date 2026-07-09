@@ -2,16 +2,17 @@
 
 ## Current Deployment State
 
-The app has a production frontend build via Vite and a Vercel serverless API entrypoint at `api/[...path].ts`.
+The app uses a Vite frontend and Vercel serverless Express entrypoints at `api/[...path].ts` and `api/teams/[id].ts`.
 
-Vercel deployment is not complete yet. As of the latest preflight, local `vercel whoami` reports no existing credentials, `.vercel/project.json` is absent, and Vercel connector project discovery did not return a matching FIFA project under the `Agent Impact Inc` team. Local `vercel build` also cannot package yet because project settings are absent; run `vercel login`, then `vercel pull --yes` or deterministic `vercel link --yes --project fifa-world-cup-2026 --scope agentimpact`.
+The dedicated project is linked as `agentimpact/fifa-world-cup-2026` (`prj_aMFdokxUDii1IGQQGkxi5rhHkn6Q`) and serves <https://fifa-world-cup-2026-umber-five.vercel.app>. The currently deployed build is healthy but remains `missing-config`; the complete 104-match build still needs its production provider key and live-mode redeploy verification.
 
 Manual GitHub Actions deployment is scaffolded in `.github/workflows/vercel-deploy.yml`. It requires `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` repository secrets, deploys with Vercel prebuilt artifacts, runs `npm run smoke:deployed` against the deployment URL, and can run Playwright smoke against the deployment URL. Playwright can also verify an existing deployment locally by setting `PLAYWRIGHT_BASE_URL`.
 
-Current scripts:
+Release scripts:
 
 - `npm run build` checks TypeScript and builds `dist/`.
 - `npm run dev:api` runs `tsx watch server/index.ts` for local development.
+- `npm run verify:production -- <url> --mode=live --expected-sha=<sha>` verifies API truth, 104-match/stage counts, provider freshness/capabilities, build identity, assets/secrets, and desktop/mobile browser flows.
 - Vercel imports `createApp()` through `api/[...path].ts` for `/api/*`.
 
 Do not deploy `tsx watch` as the production API runtime.
@@ -64,6 +65,14 @@ Recommended scheduled workflow:
 - daily provider live smoke test behind secrets,
 - provider schema drift alert,
 - provider auth failure alert.
+
+Automatic match-data behavior:
+
+- provider cache refreshes every 15 seconds when any match is live,
+- provider cache refreshes every 300 seconds when the tournament is idle,
+- the browser follows provider freshness and retries degraded states after 30 seconds,
+- optional player leaderboards are cached for 15 minutes to protect quota,
+- stale provider data is labeled stale and never silently mixed with the structural seed schedule.
 
 ## Observability
 

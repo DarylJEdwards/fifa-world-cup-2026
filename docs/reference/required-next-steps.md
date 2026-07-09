@@ -2,12 +2,10 @@
 
 ## Required Before Calling This Production-Ready
 
-1. Verify API-Football live data with real credentials and a confirmed World Cup league id.
-2. Deploy to Vercel and verify the deployed URL.
-3. Implement full official knockout third-place pairing matrix.
-4. Replace synthetic fair-play seed data with real disciplinary data when live provider data is available.
-5. Add comprehensive browser and accessibility tests.
-6. Establish production secrets, health checks, and rollback path.
+1. Add a valid `SPORTS_API_KEY` to Vercel Production through an approved secret surface.
+2. Run the credentialed provider smoke and confirm league `1`, season `2026`, returns all 104 fixtures.
+3. Deploy the current commit and pass strict `live` production verification, including build SHA, freshness, capabilities, scores, browser flows, and client-secret scanning.
+4. Establish scheduled provider smoke/alerting and a rollback record.
 
 ## Code-Splitting and Performance
 
