@@ -2,6 +2,20 @@
 
 Append-only project history. Add new entries at the top.
 
+## 2026-07-09 - Current Production Deploy And Verifier Repair
+
+### Changes
+
+- Deployed the complete 104-match build to production deployment `dpl_7kFPJoSEofA79znMt35tb6Eg6dMc` and aliased it to <https://fifa-world-cup-2026-umber-five.vercel.app>.
+- Fixed the deployed asset scanner to resolve Vite base-relative lazy chunks without producing `/assets/assets/*` false 404s.
+- Made `verify:production` accept mode/SHA flags forwarded as npm config environment variables on Windows npm.
+
+### Validation
+
+- GitHub Actions CI run `29052517899` passed quality, bundle, and 10-scenario browser gates for commit `a02645f6d7ff39367d7837a2ad097dda703bc48e`.
+- Production fallback-mode verification passed: 104 matches, 12 groups, all route families, correct team 404, four JavaScript assets scanned for secrets, matching build SHA, and 10/10 desktop/mobile Playwright scenarios.
+- Production remains deliberately degraded as `missing-config` until `SPORTS_API_KEY` is added; live-mode verification is still required.
+
 ## 2026-07-09 - Complete Tournament Model, Product Sections, And Refresh Pipeline
 
 ### Focus

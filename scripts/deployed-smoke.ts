@@ -233,7 +233,11 @@ function collectJavaScriptUrls(base: URL, parent: URL, body: string): URL[] {
   const references = [...body.matchAll(/["']([^"'\\\s]+\.js(?:\?[^"']*)?)["']/g)].map((match) => match[1]);
   return references.flatMap((reference) => {
     try {
-      const url = new URL(reference, parent);
+      // Vite's __vite__mapDeps table emits base-relative values such as
+      // "assets/CinematicStage-*.js" inside a file that already lives in
+      // /assets/. Static ESM imports still use normal parent-relative paths.
+      const resolutionBase = reference.startsWith("assets/") ? base : parent;
+      const url = new URL(reference, resolutionBase);
       return url.origin === base.origin && url.pathname.startsWith("/assets/") ? [url] : [];
     } catch {
       return [];

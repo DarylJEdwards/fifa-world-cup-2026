@@ -2,8 +2,8 @@ import { spawn } from "node:child_process";
 
 const args = process.argv.slice(2);
 const target = args.find((argument) => !argument.startsWith("--")) ?? process.env.DEPLOYMENT_URL ?? process.env.PLAYWRIGHT_BASE_URL;
-const mode = readOption("mode") ?? process.env.DEPLOYMENT_MODE;
-const expectedSha = readOption("expected-sha") ?? process.env.EXPECTED_GIT_SHA;
+const mode = readOption("mode") ?? process.env.DEPLOYMENT_MODE ?? process.env.npm_config_mode;
+const expectedSha = readOption("expected-sha") ?? process.env.EXPECTED_GIT_SHA ?? process.env.npm_config_expected_sha;
 
 if (!target) throw new Error("Missing deployed URL. Pass it as the first argument or set DEPLOYMENT_URL.");
 if (mode !== "live" && mode !== "fallback") throw new Error("Pass --mode=live or --mode=fallback.");
