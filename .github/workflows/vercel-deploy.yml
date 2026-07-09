@@ -13,6 +13,14 @@ on:
         required: false
         default: true
         type: boolean
+      provider_mode:
+        description: Expected provider state after deployment
+        required: true
+        default: fallback
+        type: choice
+        options:
+          - fallback
+          - live
 
 jobs:
   deploy:
@@ -28,7 +36,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Check Vercel secrets
@@ -71,14 +79,13 @@ jobs:
           echo "Deployed URL: $url"
 
       - name: API smoke against deployment
-        run: npm run smoke:deployed -- "${{ steps.deploy.outputs.url }}"
+        if: ${{ !inputs.run_browser_smoke }}
+        run: npm run smoke:deployed -- "${{ steps.deploy.outputs.url }}" --mode=${{ inputs.provider_mode }}
 
       - name: Install Playwright browsers
         if: inputs.run_browser_smoke
         run: npx playwright install --with-deps chromium
 
-      - name: Browser smoke against deployment
+      - name: Full production verification
         if: inputs.run_browser_smoke
-        env:
-          PLAYWRIGHT_BASE_URL: ${{ steps.deploy.outputs.url }}
-        run: npm run test:browser
+        run: npm run verify:production -- "${{ steps.deploy.outputs.url }}" --mode=${{ inputs.provider_mode }}

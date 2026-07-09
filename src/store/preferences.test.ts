@@ -67,6 +67,31 @@ describe("preference persistence", () => {
       reducedMotion: true
     });
   });
+
+  it("clamps refresh intervals and can restore every default", async () => {
+    const { usePreferences } = await import("./preferences");
+    const state = usePreferences.getState();
+
+    state.setRefreshSeconds(2);
+    expect(usePreferences.getState().refreshSeconds).toBe(10);
+    usePreferences.getState().setRefreshSeconds(999);
+    expect(usePreferences.getState().refreshSeconds).toBe(300);
+    usePreferences.getState().setRefreshSeconds(Number.NaN);
+    expect(usePreferences.getState().refreshSeconds).toBe(30);
+
+    usePreferences.getState().setTheme("gold");
+    usePreferences.getState().toggleFavorite("bra");
+    usePreferences.getState().resetPreferences();
+    expect(usePreferences.getState()).toMatchObject({
+      selectedGroup: "A",
+      favorites: ["mex", "can", "usa"],
+      theme: "dark",
+      layout: "cinematic",
+      timezone: "local",
+      refreshSeconds: 30,
+      reducedMotion: false
+    });
+  });
 });
 
 function createMemoryStorage(): Storage {

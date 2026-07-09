@@ -20,7 +20,20 @@ import { lazy, Suspense, useState } from "react";
 import CinematicStageFallback from "./components/CinematicStageFallback";
 import { useTournament } from "./hooks/useTournament";
 import { usePreferences } from "./store/preferences";
-import type { GroupCode, GroupStanding, Match, MatchStatus, StandingRow, Team, ThirdPlaceRow, TournamentSnapshot, UserPreferences } from "./types";
+import type {
+  CanonicalMatch,
+  GroupCode,
+  GroupStanding,
+  Match,
+  MatchStage,
+  MatchStatus,
+  PlayerLeaderboardCategory,
+  StandingRow,
+  Team,
+  ThirdPlaceRow,
+  TournamentSnapshot,
+  UserPreferences
+} from "./types";
 
 const CinematicStage = lazy(() => import("./components/CinematicStage"));
 
@@ -166,10 +179,10 @@ function TopBar({
 
   return (
     <header className="topbar">
-      <div className="live-chip">
+      <div className={`live-chip state-${snapshot?.providerStatus.state ?? "loading"}`}>
         <span className="live-dot" />
-        <strong>{snapshot?.providerStatus.state ?? "loading"}</strong>
-        <small>{snapshot?.providerStatus.provider ?? "Tournament feed"}</small>
+        <strong>{snapshot?.providerStatus.state === "live" ? "Live data" : snapshot?.providerStatus.state ?? "loading"}</strong>
+        <small>{snapshot?.freshness?.state ?? snapshot?.providerStatus.provider ?? "Tournament feed"}</small>
       </div>
       <button className="icon-button" onClick={() => refetch()} aria-label="Refresh data">
         <RefreshCcw size={17} className={isFetching ? "spin" : ""} />
@@ -204,6 +217,7 @@ function SectionContent({
   motionOff: boolean;
 }) {
   if (activeSection === "Matches") return <MatchesScreen snapshot={snapshot} />;
+  if (activeSection === "Groups") return <GroupsScreen snapshot={snapshot} onSelectGroup={onSelectGroup} />;
   if (activeSection === "Knockout") return <KnockoutScreen snapshot={snapshot} />;
   if (activeSection === "Teams") return <TeamsScreen snapshot={snapshot} onSelectGroup={onSelectGroup} />;
   if (activeSection === "Players") return <PlayersScreen snapshot={snapshot} />;
@@ -238,15 +252,18 @@ function SectionContent({
 function MatchesScreen({ snapshot }: { snapshot: TournamentSnapshot }) {
   const timezone = usePreferences((state) => state.timezone);
   const [statusFilter, setStatusFilter] = useState<"all" | MatchStatus>("all");
+  const [stageFilter, setStageFilter] = useState<"all" | MatchStage>("all");
   const [query, setQuery] = useState("");
   const teams = allTeams(snapshot);
-  const matches = snapshot.groups
-    .flatMap((group) => group.matches)
+  const matches = allMatches(snapshot)
     .sort((a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime())
     .filter((match) => statusFilter === "all" || match.status === statusFilter)
+    .filter((match) => stageFilter === "all" || (match.stage ?? "group") === stageFilter)
     .filter((match) => {
       const haystack = [
         match.group,
+        match.stage,
+        match.matchNumber,
         match.venue,
         teamFor(match.homeTeamId, teams)?.name,
         teamFor(match.awayTeamId, teams)?.name
@@ -260,7 +277,7 @@ function MatchesScreen({ snapshot }: { snapshot: TournamentSnapshot }) {
         id="matches-title"
         eyebrow="Schedule control"
         title="Matches"
-        detail={`${snapshot.liveMatches.length} live · ${matches.length} shown`}
+        detail={`${snapshot.liveMatches.length} live · ${matches.length} of ${snapshot.totalMatches} shown`}
       />
       <div className="screen-toolbar">
         <label className="search-control">
@@ -268,12 +285,18 @@ function MatchesScreen({ snapshot }: { snapshot: TournamentSnapshot }) {
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Team, group, venue" />
         </label>
         <SelectControl label="Status" value={statusFilter} onChange={setStatusFilter} options={["all", "live", "scheduled", "complete"]} />
+        <SelectControl
+          label="Stage"
+          value={stageFilter}
+          onChange={setStageFilter}
+          options={["all", "group", "round32", "round16", "quarterfinal", "semifinal", "thirdPlace", "final"]}
+        />
       </div>
       <div className="match-grid">
         {matches.map((match) => (
           <article className="match-card" key={match.id}>
             <div className="match-card-head">
-              <span>Group {match.group}</span>
+              <span>{match.matchNumber ? `M${match.matchNumber} · ` : ""}{match.group ? `Group ${match.group}` : stageLabel(match.stage)}</span>
               <b className={`status-pill ${match.status}`}>{match.status}</b>
             </div>
             <div className="scoreline">
@@ -285,30 +308,96 @@ function MatchesScreen({ snapshot }: { snapshot: TournamentSnapshot }) {
             {match.minute && <small>{match.minute}</small>}
           </article>
         ))}
+        {matches.length === 0 && (
+          <div className="section-empty" role="status">
+            <strong>No matches fit these filters</strong>
+            <span>Clear the team search or widen the stage and status filters.</span>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function GroupsScreen({ snapshot, onSelectGroup }: { snapshot: TournamentSnapshot; onSelectGroup: (group: GroupCode) => void }) {
+  const selectedGroup = usePreferences((state) => state.selectedGroup);
+  return (
+    <section className="section-screen" aria-labelledby="groups-title">
+      <ScreenHeader
+        id="groups-title"
+        eyebrow="Twelve-group board"
+        title="Groups"
+        detail="Standings, qualification position, and the complete six-match schedule for every group."
+      />
+      <div className="groups-board">
+        {snapshot.groups.map((group) => (
+          <article className={selectedGroup === group.code ? "group-board-card active" : "group-board-card"} key={group.code}>
+            <header>
+              <div>
+                <span>Group</span>
+                <strong>{group.code}</strong>
+              </div>
+              <button onClick={() => onSelectGroup(group.code)} aria-pressed={selectedGroup === group.code}>
+                Open command view
+              </button>
+            </header>
+            <ol>
+              {group.rows.map((row) => (
+                <li key={row.team.id}>
+                  <span>{row.rank}</span>
+                  <b>{row.team.flag} {row.team.shortName}</b>
+                  <small>{row.played}P</small>
+                  <small>{signed(row.goalDifference)} GD</small>
+                  <strong>{row.points}</strong>
+                </li>
+              ))}
+            </ol>
+            <footer>{group.matches.length} fixtures · {group.matches.filter((match) => match.status === "complete").length} final</footer>
+          </article>
+        ))}
       </div>
     </section>
   );
 }
 
 function KnockoutScreen({ snapshot }: { snapshot: TournamentSnapshot }) {
+  const teams = allTeams(snapshot);
+  const knockout = allMatches(snapshot).filter((match) => (match.stage ?? "group") !== "group");
+  const rounds: Array<{ stage: MatchStage; label: string }> = [
+    { stage: "round32", label: "Round of 32" },
+    { stage: "round16", label: "Round of 16" },
+    { stage: "quarterfinal", label: "Quarter-finals" },
+    { stage: "semifinal", label: "Semi-finals" },
+    { stage: "thirdPlace", label: "Third place" },
+    { stage: "final", label: "Final" }
+  ];
   return (
     <section className="section-screen" aria-labelledby="knockout-title">
       <ScreenHeader
         id="knockout-title"
-        eyebrow="Projection desk"
+        eyebrow="Official path"
         title="Knockout"
-        detail="Round of 32 slots use current table order; third-place matrix remains marked as provisional."
+        detail={knockout.length === 32 ? "All 32 knockout matches, from the Round of 32 through the final." : "Knockout path is unavailable from the active data source."}
       />
-      <div className="bracket-board">
-        {snapshot.knockoutSlots.map((slot) => (
-          <article className="bracket-lane" key={slot.id}>
-            <span>{slot.label}</span>
-            <strong>{slot.teamLabel}</strong>
-            <small>{slot.source}</small>
-          </article>
-        ))}
+      <div className="bracket-rounds" tabIndex={0} aria-label="Complete knockout bracket; scroll horizontally to view every round">
+        {rounds.map(({ stage, label }) => {
+          const matches = knockout.filter((match) => match.stage === stage);
+          return (
+            <section className={`bracket-round stage-${stage}`} key={stage} aria-label={label}>
+              <header><span>{label}</span><small>{matches.length} matches</small></header>
+              {matches.map((match) => (
+                <article className="bracket-match" key={match.id}>
+                  <span>M{match.matchNumber}</span>
+                  <div><TeamMark team={teamFor(match.homeTeamId, teams)} /><b>{knockoutScore(match, "home")}</b></div>
+                  <div><TeamMark team={teamFor(match.awayTeamId, teams)} /><b>{knockoutScore(match, "away")}</b></div>
+                  <small>{participantSource(match.homeSource)} · {participantSource(match.awaySource)}</small>
+                </article>
+              ))}
+            </section>
+          );
+        })}
       </div>
-      <div className="race-table expanded">
+      <div className="race-table expanded" aria-label="Best third-place ranking">
         {snapshot.thirdPlaceRace.map((entry) => (
           <div className={entry.qualifies ? "race-row qualifies" : "race-row"} key={entry.row.team.id}>
             <span>{entry.rank}</span>
@@ -326,20 +415,58 @@ function TeamsScreen({ snapshot, onSelectGroup }: { snapshot: TournamentSnapshot
   const favorites = usePreferences((state) => state.favorites);
   const toggleFavorite = usePreferences((state) => state.toggleFavorite);
   const [confederation, setConfederation] = useState("all");
+  const [query, setQuery] = useState("");
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const teams = allTeams(snapshot);
   const confederations = ["all", ...Array.from(new Set(teams.map((team) => team.confederation))).sort()];
-  const filteredTeams = confederation === "all" ? teams : teams.filter((team) => team.confederation === confederation);
+  const filteredTeams = teams
+    .filter((team) => confederation === "all" || team.confederation === confederation)
+    .filter((team) => `${team.name} ${team.shortName} ${team.profile.manager} ${team.profile.star}`.toLowerCase().includes(query.toLowerCase()));
+  const selectedTeam = teamFor(selectedTeamId ?? "", teams);
+  const selectedStanding = selectedTeam
+    ? snapshot.groups.find((group) => group.code === selectedTeam.group)?.rows.find((row) => row.team.id === selectedTeam.id)
+    : undefined;
+  const selectedMatches = selectedTeam
+    ? allMatches(snapshot).filter((match) => match.homeTeamId === selectedTeam.id || match.awayTeamId === selectedTeam.id)
+    : [];
 
   return (
     <section className="section-screen" aria-labelledby="teams-title">
       <ScreenHeader id="teams-title" eyebrow="Squad directory" title="Teams" detail={`${filteredTeams.length} teams · ${favorites.length} favorites`} />
       <div className="screen-toolbar">
+        <label className="search-control">
+          <span>Search</span>
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Team, manager, player" />
+        </label>
         <SelectControl label="Confed" value={confederation} onChange={setConfederation} options={confederations} />
       </div>
+      {selectedTeam && (
+        <article className="team-profile" aria-label={`${selectedTeam.name} team profile`}>
+          <header>
+            <span className="hero-flag">{selectedTeam.flag}</span>
+            <div>
+              <small>Group {selectedTeam.group} · {selectedTeam.confederation}</small>
+              <h2>{selectedTeam.name}</h2>
+              <p>FIFA rank {selectedTeam.fifaRank} · Best finish: {selectedTeam.profile.bestFinish}</p>
+            </div>
+            <button onClick={() => setSelectedTeamId(null)}>Close profile</button>
+          </header>
+          <dl>
+            <div><dt>Manager</dt><dd>{selectedTeam.profile.manager}</dd></div>
+            <div><dt>Captain</dt><dd>{selectedTeam.profile.captain}</dd></div>
+            <div><dt>Featured player</dt><dd>{selectedTeam.profile.star}</dd></div>
+            <div><dt>Tournament</dt><dd>{selectedStanding ? `${selectedStanding.points} pts · ${signed(selectedStanding.goalDifference)} GD` : "Awaiting standings"}</dd></div>
+          </dl>
+          <footer>
+            <span>{selectedMatches.length} tournament fixtures</span>
+            <button onClick={() => onSelectGroup(selectedTeam.group)}>Focus Group {selectedTeam.group}</button>
+          </footer>
+        </article>
+      )}
       <div className="team-directory">
         {filteredTeams.map((team) => (
           <article className="team-card" key={team.id} style={{ "--team-a": team.colors[0], "--team-b": team.colors[2] } as React.CSSProperties}>
-            <button className="team-card-main" onClick={() => onSelectGroup(team.group)} aria-label={`Open Group ${team.group} for ${team.name}`}>
+            <button className="team-card-main" onClick={() => setSelectedTeamId(team.id)} aria-label={`Open ${team.name} profile`}>
               <span className="hero-flag">{team.flag}</span>
               <strong>{team.name}</strong>
               <small>Group {team.group} · {team.confederation} · FIFA {team.fifaRank}</small>
@@ -350,6 +477,7 @@ function TeamsScreen({ snapshot, onSelectGroup }: { snapshot: TournamentSnapshot
             <p>{team.profile.bestFinish} · {team.profile.form.join(" ")}</p>
           </article>
         ))}
+        {filteredTeams.length === 0 && <div className="section-empty"><strong>No teams found</strong><span>Try another name or confederation.</span></div>}
       </div>
     </section>
   );
@@ -357,8 +485,9 @@ function TeamsScreen({ snapshot, onSelectGroup }: { snapshot: TournamentSnapshot
 
 function PlayersScreen({ snapshot }: { snapshot: TournamentSnapshot }) {
   const teams = allTeams(snapshot);
-  const sourceIsLive = snapshot.source === "provider";
-  const featured = teams.slice(0, 12);
+  const [category, setCategory] = useState<PlayerLeaderboardCategory>("goals");
+  const leaderboard = snapshot.playerLeaders?.find((entry) => entry.category === category);
+  const players = snapshot.players ?? [];
 
   return (
     <section className="section-screen" aria-labelledby="players-title">
@@ -366,30 +495,47 @@ function PlayersScreen({ snapshot }: { snapshot: TournamentSnapshot }) {
         id="players-title"
         eyebrow="Player feed"
         title="Players"
-        detail={sourceIsLive ? "Provider-backed player surfaces are ready for statistics." : "Seed cache has team profile stars only; provider player statistics are unavailable."}
+        detail={snapshot.capabilities?.playerStats ? "Provider-backed tournament leaders, refreshed with the match feed." : "The active source has no verified player-stat feed."}
       />
-      <div className="provider-note" role="status">
-        <strong>{sourceIsLive ? "Provider connected" : "Player stats unavailable"}</strong>
-        <span>{sourceIsLive ? "Top scorers, cards, assists, and minutes can be added when API-Football player endpoints are enabled." : "No goalscorer or player-stat feed is included in the local seed cache, so this screen avoids fake leaderboards."}</span>
-      </div>
-      <div className="player-grid">
-        {featured.map((team) => (
-          <article className="player-card" key={team.id}>
-            <span>{team.flag}</span>
-            <strong>{team.profile.star}</strong>
-            <small>{team.name} · Group {team.group}</small>
-          </article>
-        ))}
-      </div>
+      {snapshot.capabilities?.leaderboards && leaderboard ? (
+        <>
+          <div className="screen-toolbar">
+            <SelectControl label="Leaderboard" value={category} onChange={setCategory} options={["goals", "assists", "minutes", "yellowCards", "redCards"]} />
+          </div>
+          <div className="player-leaderboard">
+            {leaderboard.entries.map((entry) => {
+              const player = players.find((candidate) => candidate.id === entry.playerId);
+              const team = teamFor(entry.teamId, teams);
+              return (
+                <article key={entry.playerId}>
+                  <span>{entry.rank}</span>
+                  {player?.photoUrl ? <img src={player.photoUrl} alt="" /> : <b>{team?.flag ?? "•"}</b>}
+                  <div><strong>{player?.name ?? "Player"}</strong><small>{team?.name ?? "Team unavailable"} · {player?.position ?? "Position pending"}</small></div>
+                  <em>{entry.value}</em>
+                </article>
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <div className="section-empty provider-empty" role="status">
+          <strong>Verified player statistics are unavailable</strong>
+          <span>This screen will populate automatically when the API-Football player endpoints are configured. No synthetic leaderboard is shown.</span>
+          <small>{snapshot.providerStatus.detail}</small>
+        </div>
+      )}
     </section>
   );
 }
 
 function StatsHubScreen({ snapshot }: { snapshot: TournamentSnapshot }) {
-  const matches = snapshot.groups.flatMap((group) => group.matches);
+  const matches = allMatches(snapshot);
   const completed = matches.filter((match) => match.status === "complete").length;
   const scheduled = matches.filter((match) => match.status === "scheduled").length;
   const leaders = snapshot.groups.map((group) => group.rows[0]).sort((a, b) => b.points - a.points).slice(0, 8);
+  const stageCounts = stageSummary(snapshot);
+  const played = matches.filter((match) => match.homeScore !== null && match.awayScore !== null).length;
+  const goalsPerMatch = played > 0 ? (snapshot.goalsScored / played).toFixed(2) : "—";
 
   return (
     <section className="section-screen" aria-labelledby="stats-title">
@@ -399,6 +545,7 @@ function StatsHubScreen({ snapshot }: { snapshot: TournamentSnapshot }) {
         <Metric label="Completed" value={completed} />
         <Metric label="Scheduled" value={scheduled} />
         <Metric label="Goals" value={snapshot.goalsScored} />
+        <Metric label="Goals / match" value={goalsPerMatch} />
       </div>
       <div className="section-split">
         <div className="standings-panel">
@@ -415,10 +562,19 @@ function StatsHubScreen({ snapshot }: { snapshot: TournamentSnapshot }) {
             </tbody>
           </table>
         </div>
-        <div className="provider-note">
-          <strong>{snapshot.providerStatus.provider}</strong>
-          <span>{snapshot.providerStatus.state} · checked {formatClock(snapshot.providerStatus.checkedAt)}</span>
-          {snapshot.providerStatus.cacheAgeSeconds !== undefined && <small>Cache age {snapshot.providerStatus.cacheAgeSeconds}s</small>}
+        <div className="stage-telemetry">
+          {stageCounts.map((entry) => (
+            <div key={entry.stage}>
+              <span>{entry.label}</span>
+              <b>{entry.complete}/{entry.total}</b>
+              <i style={{ width: `${entry.total ? (entry.complete / entry.total) * 100 : 0}%` }} />
+            </div>
+          ))}
+          <div className="provider-note">
+            <strong>{snapshot.providerStatus.provider}</strong>
+            <span>{snapshot.providerStatus.state} · checked {formatClock(snapshot.providerStatus.checkedAt)}</span>
+            <small>Freshness: {snapshot.freshness?.state ?? "unavailable"}{snapshot.freshness?.ageSeconds !== undefined ? ` · ${snapshot.freshness.ageSeconds}s old` : ""}</small>
+          </div>
         </div>
       </div>
     </section>
@@ -436,6 +592,7 @@ function SettingsScreen({ snapshot }: { snapshot: TournamentSnapshot }) {
   const setRefreshSeconds = usePreferences((state) => state.setRefreshSeconds);
   const reducedMotion = usePreferences((state) => state.reducedMotion);
   const setReducedMotion = usePreferences((state) => state.setReducedMotion);
+  const resetPreferences = usePreferences((state) => state.resetPreferences);
 
   return (
     <section className="section-screen" aria-labelledby="settings-title">
@@ -458,6 +615,7 @@ function SettingsScreen({ snapshot }: { snapshot: TournamentSnapshot }) {
         <button className={reducedMotion ? "primary-button active" : "primary-button"} onClick={() => setReducedMotion(!reducedMotion)}>
           {reducedMotion ? "Reduced motion on" : "Reduced motion off"}
         </button>
+        <button className="secondary-button" onClick={resetPreferences}>Reset preferences</button>
       </div>
       <div className="provider-note">
         <strong>{snapshot.providerStatus.provider}</strong>
@@ -466,6 +624,57 @@ function SettingsScreen({ snapshot }: { snapshot: TournamentSnapshot }) {
       </div>
     </section>
   );
+}
+
+function allMatches(snapshot: TournamentSnapshot): CanonicalMatch[] {
+  if (snapshot.matches?.length) return [...snapshot.matches];
+  return snapshot.groups.flatMap((group) => group.matches).map((match, index) => ({
+    ...match,
+    matchNumber: match.matchNumber ?? index + 1,
+    stage: match.stage ?? "group",
+    homeSource: match.homeSource ?? { kind: "team", teamId: match.homeTeamId },
+    awaySource: match.awaySource ?? { kind: "team", teamId: match.awayTeamId }
+  }));
+}
+
+function stageLabel(stage?: MatchStage) {
+  return ({
+    group: "Group stage",
+    round32: "Round of 32",
+    round16: "Round of 16",
+    quarterfinal: "Quarter-final",
+    semifinal: "Semi-final",
+    thirdPlace: "Third place",
+    final: "Final"
+  } as const)[stage ?? "group"];
+}
+
+function participantSource(source: CanonicalMatch["homeSource"] | undefined): string {
+  if (!source) return "TBD";
+  if (source.kind === "team") return "Qualified team";
+  if (source.kind === "groupRank") return `${ordinal(source.rank)} Group ${source.group}`;
+  if (source.kind === "thirdPlace") return `3rd Group ${source.group}`;
+  return `${source.kind === "winnerOf" ? "Winner" : "Loser"} M${source.matchNumber}`;
+}
+
+function knockoutScore(match: Match, side: "home" | "away") {
+  const score = side === "home" ? match.homeScore : match.awayScore;
+  const penalties = side === "home" ? match.homePenaltyScore : match.awayPenaltyScore;
+  if (score === null) return "—";
+  return penalties === null || penalties === undefined ? score : `${score} (${penalties})`;
+}
+
+function stageSummary(snapshot: TournamentSnapshot) {
+  const stages: MatchStage[] = ["group", "round32", "round16", "quarterfinal", "semifinal", "thirdPlace", "final"];
+  return stages.map((stage) => {
+    const matches = allMatches(snapshot).filter((match) => match.stage === stage);
+    return {
+      stage,
+      label: stageLabel(stage),
+      total: matches.length,
+      complete: matches.filter((match) => match.status === "complete").length
+    };
+  });
 }
 
 function ScreenHeader({ id, eyebrow, title, detail }: { id: string; eyebrow: string; title: string; detail: string }) {
@@ -825,13 +1034,15 @@ function formatClock(value?: string, preference: UserPreferences["timezone"] = "
 }
 
 function formatDate(value: string, preference: UserPreferences["timezone"] = "local") {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Time TBD";
   return new Intl.DateTimeFormat(undefined, {
     month: "short",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
     timeZone: timeZoneFor(preference)
-  }).format(new Date(value));
+  }).format(date);
 }
 
 function timeZoneFor(preference: UserPreferences["timezone"]) {

@@ -1,5 +1,6 @@
 import { groupCodes, matches, teams } from "../data/seed.js";
 import type { GroupStanding, KnockoutSlot, Match, StandingRow, Team, ThirdPlaceRow, TournamentSnapshot } from "../types.js";
+import { buildFullKnockoutSlots, buildTournamentSchedule } from "./tournament.js";
 
 const fairPlaySeed: Record<string, number> = Object.fromEntries(
   teams.map((team, index) => [team.id, -((index % 4) + (team.fifaRank % 3))])
@@ -9,7 +10,8 @@ export function buildTournamentSnapshot(source: TournamentSnapshot["source"] = "
   const groups = buildGroupStandings(teams, matches);
   const thirdPlaceRace = rankThirdPlaceTeams(groups);
   const knockoutSlots = buildKnockoutSlots(groups, thirdPlaceRace);
-  const countedMatches = matches.filter((match) => match.homeScore !== null && match.awayScore !== null);
+  const tournamentMatches = buildTournamentSchedule(groups, thirdPlaceRace, matches);
+  const countedMatches = tournamentMatches.filter((match) => match.homeScore !== null && match.awayScore !== null);
   const checkedAt = new Date().toISOString();
 
   return {
@@ -25,9 +27,25 @@ export function buildTournamentSnapshot(source: TournamentSnapshot["source"] = "
     groups,
     thirdPlaceRace,
     knockoutSlots,
-    liveMatches: matches.filter((match) => match.status === "live"),
-    totalMatches: 104,
-    goalsScored: countedMatches.reduce((total, match) => total + (match.homeScore ?? 0) + (match.awayScore ?? 0), 0)
+    matches: tournamentMatches,
+    liveMatches: tournamentMatches.filter((match) => match.status === "live"),
+    totalMatches: tournamentMatches.length,
+    goalsScored: countedMatches.reduce((total, match) => total + (match.homeScore ?? 0) + (match.awayScore ?? 0), 0),
+    capabilities: {
+      liveScores: source === "provider",
+      standings: true,
+      fullSchedule: true,
+      bracket: true,
+      teamProfiles: true,
+      playerStats: false,
+      leaderboards: false
+    },
+    freshness: {
+      state: source === "provider" ? "live" : "unavailable",
+      updatedAt: checkedAt
+    },
+    players: [],
+    playerLeaders: []
   };
 }
 
@@ -170,22 +188,7 @@ export function compareThirdRows(a: StandingRow, b: StandingRow): number {
 }
 
 export function buildKnockoutSlots(groups: GroupStanding[], thirdPlaceRace: ThirdPlaceRow[]): KnockoutSlot[] {
-  const groupMap = new Map(groups.map((group) => [group.code, group]));
-  const bestThirds = thirdPlaceRace.filter((entry) => entry.qualifies);
-  const slot = (id: string, label: string, source: string, teamLabel: string): KnockoutSlot => ({ id, label, source, teamLabel });
-
-  return [
-    slot("r32-73", "Match 73", "Runner-up A vs Runner-up B", `${groupMap.get("A")?.rows[1].team.shortName} vs ${groupMap.get("B")?.rows[1].team.shortName}`),
-    slot("r32-74", "Match 74", "Winner E vs best 3rd A/B/C/D/F", `${groupMap.get("E")?.rows[0].team.shortName} vs ${pickThird(bestThirds, ["A", "B", "C", "D", "F"])}`),
-    slot("r32-79", "Match 79", "Winner A vs best 3rd C/E/F/H/I", `${groupMap.get("A")?.rows[0].team.shortName} vs ${pickThird(bestThirds, ["C", "E", "F", "H", "I"])}`),
-    slot("r32-85", "Match 85", "Winner B vs best 3rd E/F/G/I/J", `${groupMap.get("B")?.rows[0].team.shortName} vs ${pickThird(bestThirds, ["E", "F", "G", "I", "J"])}`),
-    slot("final", "Final", "Road to MetLife Stadium", "1 champion")
-  ];
-}
-
-function pickThird(thirdPlaceRace: ThirdPlaceRow[], eligibleGroups: string[]): string {
-  const entry = thirdPlaceRace.find((candidate) => eligibleGroups.includes(candidate.group));
-  return entry ? `${entry.row.team.shortName} (${entry.group}3)` : "3rd place";
+  return buildFullKnockoutSlots(groups, thirdPlaceRace);
 }
 
 function seedRow(team: Team): StandingRow {

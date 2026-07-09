@@ -2,10 +2,59 @@ import { expect, test } from "@playwright/test";
 import axe from "axe-core";
 
 test.beforeEach(async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await expect(page.getByText("Live Tournament Orbit")).toBeVisible({ timeout: 20_000 });
+});
+
+test("all product sections expose complete fallback-safe workflows", async ({ page }) => {
+  const openSection = async (name: string) => {
+    const button = page.getByRole("button", { name });
+    if (!(await button.isVisible())) await page.getByRole("button", { name: "Open menu" }).click();
+    await button.click();
+    await expect(page.getByRole("heading", { name, exact: true })).toBeVisible();
+  };
+
+  await openSection("Groups");
+  await expect(page.locator(".group-board-card")).toHaveCount(12);
+  await expect(page.locator(".group-board-card").first()).toContainText("6 fixtures");
+
+  await openSection("Matches");
+  await expect(page.locator(".match-card")).toHaveCount(104);
+  await page.getByLabel("Stage").selectOption("round32");
+  await expect(page.locator(".match-card")).toHaveCount(16);
+  await page.getByLabel("Search").fill("no-such-team");
+  await expect(page.getByText("No matches fit these filters")).toBeVisible();
+  await page.getByLabel("Search").fill("");
+
+  await openSection("Knockout");
+  await expect(page.locator(".bracket-round")).toHaveCount(6);
+  await expect(page.locator(".bracket-match")).toHaveCount(32);
+  await expect(page.getByLabel("Best third-place ranking")).toBeAttached();
+
+  await openSection("Teams");
+  await expect(page.locator(".team-card")).toHaveCount(48);
+  await page.getByRole("button", { name: "Open Mexico profile" }).click();
+  await expect(page.getByRole("article", { name: "Mexico team profile" })).toContainText("4 tournament fixtures");
+  await page.getByLabel("Search").fill("Mexico");
+  await expect(page.locator(".team-card")).toHaveCount(1);
+
+  await openSection("Players");
+  await expect(page.getByText("Verified player statistics are unavailable")).toBeVisible();
+
+  await openSection("Stats Hub");
+  await expect(page.locator(".kpi-grid")).toContainText("104");
+  await expect(page.locator(".stage-telemetry > div").first()).toContainText("0/72");
+
+  await openSection("Settings");
+  const settings = page.getByRole("region", { name: "Settings" });
+  await page.locator(".refresh-control input").fill("2");
+  await expect(page.locator(".refresh-control input")).toHaveValue("10");
+  await settings.getByLabel("Theme").selectOption("gold");
+  await page.getByRole("button", { name: "Reset preferences" }).click();
+  await expect(settings.getByLabel("Theme")).toHaveValue("dark");
 });
 
 test("core command-center controls update visible state", async ({ page }, testInfo) => {
@@ -71,7 +120,7 @@ test("navigation opens every product section", async ({ page }) => {
   await menuButton.click();
   await expect(menuButton).toHaveAttribute("aria-expanded", "true");
 
-  for (const section of ["Matches", "Knockout", "Teams", "Players", "Stats Hub", "Settings"]) {
+  for (const section of ["Matches", "Groups", "Knockout", "Teams", "Players", "Stats Hub", "Settings"]) {
     if (!(await page.getByRole("button", { name: section }).isVisible())) {
       await menuButton.click();
     }
@@ -79,14 +128,9 @@ test("navigation opens every product section", async ({ page }) => {
     await expect(page.getByRole("heading", { name: section })).toBeVisible();
   }
 
-  if (!(await page.getByRole("button", { name: "Groups" }).isVisible())) {
-    await menuButton.click();
-  }
-  await page.getByRole("button", { name: "Groups" }).click();
-  await expect(page.getByText("Live Tournament Orbit")).toBeVisible();
 });
 
-test("keyboard focus and serious accessibility checks pass", async ({ page }) => {
+test("keyboard focus and serious accessibility checks pass on every section", async ({ page }) => {
   const homeNav = page.getByRole("button", { name: "Home" });
   if (!(await homeNav.isVisible())) {
     await page.getByRole("button", { name: "Open menu" }).click();
@@ -94,24 +138,25 @@ test("keyboard focus and serious accessibility checks pass", async ({ page }) =>
   await homeNav.focus();
   await expect(homeNav).toBeFocused();
 
-  await page.addScriptTag({ content: axe.source });
-  const results = await page.evaluate<AxeRunResult>(async () => {
-    const runner = (window as unknown as AxeWindow).axe;
-    return runner.run(document, {
-      rules: {
-        "color-contrast": { enabled: false }
-      }
+  for (const section of ["Home", "Matches", "Groups", "Knockout", "Teams", "Players", "Stats Hub", "Settings"]) {
+    const button = page.getByRole("button", { name: section });
+    if (!(await button.isVisible())) await page.getByRole("button", { name: "Open menu" }).click();
+    await button.click();
+    await page.addScriptTag({ content: axe.source });
+    const results = await page.evaluate<AxeRunResult>(async () => {
+      const runner = (window as unknown as AxeWindow).axe;
+      return runner.run(document);
     });
-  });
-  const severeViolations = results.violations.filter((violation) => violation.impact === "critical" || violation.impact === "serious");
-
-  expect(
-    severeViolations.map((violation) => ({
-      id: violation.id,
-      impact: violation.impact,
-      targets: violation.nodes.flatMap((node) => node.target)
-    }))
-  ).toEqual([]);
+    const severeViolations = results.violations.filter((violation) => violation.impact === "critical" || violation.impact === "serious");
+    expect(
+      severeViolations.map((violation) => ({
+        id: violation.id,
+        impact: violation.impact,
+        targets: violation.nodes.flatMap((node) => node.target)
+      })),
+      `${section} accessibility violations`
+    ).toEqual([]);
+  }
 });
 
 interface AxeWindow {

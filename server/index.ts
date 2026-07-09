@@ -2,13 +2,21 @@ import cors from "cors";
 import express from "express";
 import { buildTournamentSnapshot } from "../src/lib/standings.js";
 import type { ProviderStatus, TournamentSnapshot } from "../src/types.js";
-import { loadApiFootballSnapshot } from "./provider/apiFootball.js";
+import {
+  API_FOOTBALL_WORLD_CUP_LEAGUE_ID,
+  API_FOOTBALL_WORLD_CUP_SEASON,
+  loadApiFootballSnapshot,
+  resetApiFootballCachesForTests
+} from "./provider/apiFootball.js";
 
 const port = Number(process.env.PORT ?? 4174);
-let providerCache: { snapshot: TournamentSnapshot; fetchedAt: number; staleUntil: number } | undefined;
+let providerCache: { snapshot: TournamentSnapshot; fetchedAt: number; freshUntil: number; staleUntil: number } | undefined;
 
 export function resetProviderCacheForTests(): void {
-  if (process.env.NODE_ENV === "test") providerCache = undefined;
+  if (process.env.NODE_ENV === "test") {
+    providerCache = undefined;
+    resetApiFootballCachesForTests();
+  }
 }
 
 export function createApp() {
@@ -18,10 +26,16 @@ export function createApp() {
   app.use(cors());
   app.use(express.json());
 
-  app.get("/api/health", (_request, response) => {
+  app.get("/api/health", async (_request, response) => {
+    cache = await loadSnapshot();
+    const ready = cache.providerStatus.state === "live";
     response.json({
-      ok: true,
+      ok: ready,
+      ready,
+      degraded: !ready,
+      providerConfigured: Boolean(process.env.SPORTS_API_BASE_URL && process.env.SPORTS_API_KEY),
       provider: process.env.SPORTS_PROVIDER ?? "seed",
+      buildSha: process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.GITHUB_SHA ?? "local",
       cachedAt: cache.lastUpdated,
       providerStatus: cache.providerStatus
     });
@@ -39,7 +53,7 @@ export function createApp() {
 
   app.get("/api/matches", async (_request, response) => {
     cache = await loadSnapshot();
-    response.json(cache.groups.flatMap((group) => group.matches));
+    response.json(cache.matches ?? cache.groups.flatMap((group) => group.matches));
   });
 
   app.get("/api/standings", async (_request, response) => {
@@ -80,26 +94,32 @@ export async function loadSnapshot(): Promise<TournamentSnapshot> {
   }
 
   const now = Date.now();
-  const freshTtlSeconds = envNumber("PROVIDER_CACHE_TTL_SECONDS", 60);
+  const legacyTtlSeconds = envOptionalNumber("PROVIDER_CACHE_TTL_SECONDS");
+  const liveTtlSeconds = legacyTtlSeconds ?? envNumber("PROVIDER_LIVE_CACHE_TTL_SECONDS", 15);
+  const idleTtlSeconds = legacyTtlSeconds ?? envNumber("PROVIDER_IDLE_CACHE_TTL_SECONDS", 300);
   const staleTtlSeconds = envNumber("PROVIDER_STALE_TTL_SECONDS", 600);
   const timeoutMs = envNumber("PROVIDER_TIMEOUT_MS", 8000);
-  if (providerCache && now - providerCache.fetchedAt < freshTtlSeconds * 1000) {
-    return withCacheAge(providerCache.snapshot, "live", Math.round((now - providerCache.fetchedAt) / 1000), freshTtlSeconds);
+  if (providerCache && now < providerCache.freshUntil) {
+    const cacheAgeSeconds = Math.round((now - providerCache.fetchedAt) / 1000);
+    const nextRefreshSeconds = Math.max(1, Math.ceil((providerCache.freshUntil - now) / 1000));
+    return withCacheAge(providerCache.snapshot, "live", cacheAgeSeconds, nextRefreshSeconds);
   }
 
   try {
     const snapshot = await loadApiFootballSnapshot({
       baseUrl: providerUrl,
       apiKey: providerKey,
-      leagueId: process.env.SPORTS_API_LEAGUE_ID ?? "1",
-      season: process.env.SPORTS_API_SEASON ?? "2026",
+      leagueId: process.env.SPORTS_API_LEAGUE_ID ?? API_FOOTBALL_WORLD_CUP_LEAGUE_ID,
+      season: process.env.SPORTS_API_SEASON ?? API_FOOTBALL_WORLD_CUP_SEASON,
       timeoutMs,
       providerName
     });
     if (!isTournamentSnapshot(snapshot)) throw new Error("Provider mapper returned an invalid TournamentSnapshot");
+    const freshTtlSeconds = snapshot.liveMatches.length > 0 ? liveTtlSeconds : idleTtlSeconds;
     providerCache = {
       snapshot,
       fetchedAt: now,
+      freshUntil: now + freshTtlSeconds * 1000,
       staleUntil: now + staleTtlSeconds * 1000
     };
     return withCacheAge(snapshot, "live", 0, freshTtlSeconds);
@@ -107,7 +127,8 @@ export async function loadSnapshot(): Promise<TournamentSnapshot> {
     const message = error instanceof Error ? error.message : "Unknown provider error";
     console.warn("Falling back to seed cache:", message);
     if (providerCache && now < providerCache.staleUntil) {
-      return withCacheAge(providerCache.snapshot, "stale", Math.round((now - providerCache.fetchedAt) / 1000), freshTtlSeconds, message);
+      const retrySeconds = providerCache.snapshot.liveMatches.length > 0 ? liveTtlSeconds : idleTtlSeconds;
+      return withCacheAge(providerCache.snapshot, "stale", Math.round((now - providerCache.fetchedAt) / 1000), retrySeconds, message);
     }
     return withProviderStatus(
       buildTournamentSnapshot("seed-cache", "Seed cache fallback"),
@@ -125,6 +146,13 @@ export function isTournamentSnapshot(value: unknown): value is TournamentSnapsho
   if (!Array.isArray(snapshot.thirdPlaceRace) || !Array.isArray(snapshot.knockoutSlots) || !Array.isArray(snapshot.liveMatches)) return false;
   if (typeof snapshot.lastUpdated !== "string") return false;
   if (!isProviderStatus(snapshot.providerStatus)) return false;
+  if (snapshot.source === "provider") {
+    if (!Array.isArray(snapshot.matches) || snapshot.matches.length !== 104) return false;
+    if (new Set(snapshot.matches.map((match) => match.matchNumber)).size !== 104) return false;
+    if (snapshot.matches.some((match) => !match.stage || !match.homeSource || !match.awaySource)) return false;
+    if (!snapshot.capabilities?.fullSchedule || !snapshot.capabilities.bracket) return false;
+    if (!snapshot.freshness || snapshot.freshness.state === "unavailable") return false;
+  }
 
   return snapshot.groups.every((group) =>
     typeof group.code === "string" &&
@@ -161,6 +189,7 @@ function withProviderStatus(
   provider: string,
   detail: string
 ): TournamentSnapshot {
+  const checkedAt = new Date().toISOString();
   return {
     ...snapshot,
     source: state === "live" || state === "stale" ? "provider" : "seed-cache",
@@ -169,7 +198,12 @@ function withProviderStatus(
       state,
       provider,
       detail,
-      checkedAt: new Date().toISOString()
+      checkedAt
+    },
+    freshness: {
+      state: state === "live" ? "live" : state === "stale" ? "stale" : "unavailable",
+      updatedAt: checkedAt,
+      ageSeconds: 0
     }
   };
 }
@@ -181,6 +215,7 @@ function withCacheAge(
   nextRefreshSeconds: number,
   errorDetail?: string
 ): TournamentSnapshot {
+  const checkedAt = new Date().toISOString();
   return {
     ...snapshot,
     providerStatus: {
@@ -189,9 +224,15 @@ function withCacheAge(
       detail: errorDetail
         ? `Serving stale provider cache after refresh failure: ${errorDetail}`
         : snapshot.providerStatus.detail,
-      checkedAt: new Date().toISOString(),
+      checkedAt,
       cacheAgeSeconds,
       nextRefreshSeconds
+    },
+    freshness: {
+      state: state === "stale" ? "stale" : cacheAgeSeconds > 0 ? "cached" : "live",
+      updatedAt: snapshot.freshness?.updatedAt ?? snapshot.lastUpdated,
+      ageSeconds: cacheAgeSeconds,
+      nextRefreshAt: new Date(Date.now() + nextRefreshSeconds * 1000).toISOString()
     }
   };
 }
@@ -199,4 +240,11 @@ function withCacheAge(
 function envNumber(name: string, fallback: number): number {
   const value = Number(process.env[name]);
   return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+function envOptionalNumber(name: string): number | undefined {
+  const raw = process.env[name];
+  if (!raw) return undefined;
+  const value = Number(raw);
+  return Number.isFinite(value) && value > 0 ? value : undefined;
 }

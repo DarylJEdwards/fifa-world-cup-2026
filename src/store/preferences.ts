@@ -10,18 +10,23 @@ interface PreferenceState extends UserPreferences {
   setTimezone: (timezone: UserPreferences["timezone"]) => void;
   setRefreshSeconds: (seconds: number) => void;
   setReducedMotion: (value: boolean) => void;
+  resetPreferences: () => void;
 }
+
+const defaultPreferences: UserPreferences = {
+  selectedGroup: "A",
+  favorites: ["mex", "can", "usa"],
+  theme: "dark",
+  layout: "cinematic",
+  timezone: "local",
+  refreshSeconds: 30,
+  reducedMotion: false
+};
 
 export const usePreferences = create<PreferenceState>()(
   persist(
     (set) => ({
-      selectedGroup: "A",
-      favorites: ["mex", "can", "usa"],
-      theme: "dark",
-      layout: "cinematic",
-      timezone: "local",
-      refreshSeconds: 30,
-      reducedMotion: false,
+      ...defaultPreferences,
       setSelectedGroup: (selectedGroup) => set({ selectedGroup }),
       toggleFavorite: (teamId) =>
         set((state) => ({
@@ -32,8 +37,9 @@ export const usePreferences = create<PreferenceState>()(
       setTheme: (theme) => set({ theme }),
       setLayout: (layout) => set({ layout }),
       setTimezone: (timezone) => set({ timezone }),
-      setRefreshSeconds: (refreshSeconds) => set({ refreshSeconds }),
-      setReducedMotion: (reducedMotion) => set({ reducedMotion })
+      setRefreshSeconds: (seconds) => set({ refreshSeconds: clampRefreshSeconds(seconds) }),
+      setReducedMotion: (reducedMotion) => set({ reducedMotion }),
+      resetPreferences: () => set({ ...defaultPreferences, favorites: [...defaultPreferences.favorites] })
     }),
     {
       name: "wc26-command-center-preferences",
@@ -41,3 +47,8 @@ export const usePreferences = create<PreferenceState>()(
     }
   )
 );
+
+function clampRefreshSeconds(value: number): number {
+  if (!Number.isFinite(value)) return defaultPreferences.refreshSeconds;
+  return Math.min(300, Math.max(10, Math.round(value)));
+}

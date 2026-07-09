@@ -65,16 +65,30 @@ endpointSummaries.forEach((summary) => {
   ].filter(Boolean);
   console.log(details.join(" "));
 });
+const failedEndpoint = endpointSummaries.find((summary) => !summary.ok);
+if (failedEndpoint) throw new Error(`API-Football ${failedEndpoint.endpoint} smoke failed with status ${failedEndpoint.status}`);
+const leagueSummary = endpointSummaries.find((summary) => summary.endpoint === "leagues");
+if (leagueSummary?.responseCount !== 1) throw new Error("Expected exactly one World Cup league response for id=1 season=2026");
 
 const snapshot = await loadApiFootballSnapshot(config);
 if (!isTournamentSnapshot(snapshot)) {
   throw new Error("Provider mapper returned an invalid TournamentSnapshot");
 }
+if (snapshot.source !== "provider" || snapshot.providerStatus.state !== "live") {
+  throw new Error("Provider smoke did not produce a live provider snapshot");
+}
+if (snapshot.matches?.length !== 104) throw new Error(`Expected 104 mapped fixtures; received ${snapshot.matches?.length ?? 0}`);
+if (snapshot.matches.filter((match) => match.stage === "group").length !== 72) throw new Error("Expected 72 group fixtures");
+if (snapshot.matches.filter((match) => match.stage !== "group").length !== 32) throw new Error("Expected 32 knockout fixtures");
+if (!snapshot.capabilities?.liveScores || !snapshot.capabilities.fullSchedule || !snapshot.capabilities.bracket) {
+  throw new Error("Live provider snapshot is missing required score, schedule, or bracket capabilities");
+}
 
 console.log(`mappedSource=${snapshot.source}`);
 console.log(`mappedProviderState=${snapshot.providerStatus.state}`);
 console.log(`groups=${snapshot.groups.length}`);
-console.log(`matches=${snapshot.groups.flatMap((group) => group.matches).length}`);
+console.log(`matches=${snapshot.matches.length}`);
+console.log(`knockoutMatches=${snapshot.matches.filter((match) => match.stage !== "group").length}`);
 console.log(`checkedAt=${snapshot.providerStatus.checkedAt}`);
 console.log("API-Football live smoke passed");
 
