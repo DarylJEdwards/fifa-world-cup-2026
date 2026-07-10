@@ -57,6 +57,19 @@ test("all product sections expose complete fallback-safe workflows", async ({ pa
   await expect(settings.getByLabel("Theme")).toHaveValue("dark");
 });
 
+test("live deployments hydrate official results without a manual refresh", async ({ page }) => {
+  test.skip(process.env.EXPECT_LIVE_DATA !== "1", "Strict live-data assertion only runs against production live mode.");
+
+  await expect(page.getByText("Live data", { exact: true })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("link", { name: "Source: FIFA" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Matches" }).click();
+  await expect(page.getByRole("heading", { name: "Matches", exact: true })).toBeVisible();
+  const completedCards = page.locator(".match-card", { has: page.locator(".status-pill.complete") });
+  expect(await completedCards.count()).toBeGreaterThan(0);
+  const visibleScores = await completedCards.locator(".scoreline strong").allTextContents();
+  expect(visibleScores.some((score) => /^\d+ - \d+$/.test(score.trim()))).toBe(true);
+});
 test("core command-center controls update visible state", async ({ page }, testInfo) => {
   testInfo.setTimeout(60_000);
   await expect(page.locator(".group-card")).toHaveCount(12);

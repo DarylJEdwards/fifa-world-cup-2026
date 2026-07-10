@@ -19,7 +19,11 @@ console.log(`productionVerificationBaseUrl=${baseUrl}`);
 console.log(`productionVerificationMode=${mode}`);
 
 await runNpm(smokeArguments);
-await runNpm(["run", "test:browser"], { ...process.env, PLAYWRIGHT_BASE_URL: baseUrl });
+await runNpm(["run", "test:browser"], {
+  ...process.env,
+  PLAYWRIGHT_BASE_URL: baseUrl,
+  EXPECT_LIVE_DATA: mode === "live" ? "1" : "0"
+});
 
 console.log("production verification passed");
 

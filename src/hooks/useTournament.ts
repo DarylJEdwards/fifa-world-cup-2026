@@ -14,6 +14,7 @@ export function useTournament() {
       return response.json() as Promise<TournamentSnapshot>;
     },
     initialData: () => buildTournamentSnapshot(),
+    initialDataUpdatedAt: 0,
     refetchInterval: (query) => tournamentRefetchIntervalMs(query.state.data, refreshSeconds),
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
