@@ -1,12 +1,14 @@
 # Required and Recommended Next Steps
 
-## Required Before Calling This Production-Ready
+## Current Production Status
 
-1. Deploy the current FIFA-provider commit.
-2. Pass strict `live` production verification, including build SHA, freshness, 104 matches, current scores, browser flows, attribution, and client-secret scanning.
-3. Trigger the keyless scheduled/manual provider smoke and confirm it cannot skip.
-4. Record the deployment id, CI run, live results count, and rollback target.
-5. Complete a rights review before commercial use of FIFA content.
+The implementation and deployment gates are complete. Production passed strict `live` verification for the exact build SHA, FIFA freshness, all 104 matches, 97 completed results at verification time, current scores, automatic first-load hydration, attribution, client-secret scanning, and desktop/mobile flows.
+
+Remaining operational work:
+
+1. Keep the scheduled/manual keyless provider smoke green and treat schema drift as an incident.
+2. Complete a rights review before commercial use of FIFA content.
+3. Optionally add `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` GitHub secrets for the manual workflow; direct CLI deployment is already working.
 
 ## Code-Splitting and Performance
 

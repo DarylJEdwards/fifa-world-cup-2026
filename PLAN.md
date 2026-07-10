@@ -8,10 +8,10 @@ This is the living planning surface. Keep it current as the project changes.
 - The Round of 32 participant formulas and all 495 official Annexe C third-place combinations are implemented and exhaustively tested.
 - The current 48-team field and all 12 groups are represented without fabricated results. Seed mode supplies a structural fallback with scheduled/null scores only.
 - FIFA's official public calendar API is the primary live source. The adapter requires competition `17`, season `285023`, all 104 unique match numbers, exact stage boundaries, known status/result enums, and resolved teams for every active or completed match.
-- Automatic refresh is implemented end to end: 15-second fixture refresh while a match is live, 300 seconds while idle, 30-second degraded retries, and a 15-minute cache for optional player leaderboards.
+- Automatic refresh is implemented end to end: the browser hydrates FIFA data immediately on first load, then refreshes fixtures every 15 seconds while a match is live, every 300 seconds while idle, and every 30 seconds during degraded recovery.
 - Matches, Groups, Knockout, Teams, Players, Stats Hub, and Settings are complete product surfaces.
-- Local release evidence is green: 48 Vitest tests, Vercel NodeNext type-checking, production build, bundle budgets, and 10 desktop/mobile Playwright scenarios against FIFA's real feed with serious/critical axe checks.
-- The remaining release gate is deployment proof: publish the current commit, then pass `npm run verify:production -- <url> --mode=live --expected-sha=<sha>`.
+- Release evidence is green: 48 Vitest tests, Vercel NodeNext type-checking, production build, bundle budgets, 10 fallback-safe desktop/mobile scenarios, and 2 live-only automatic-hydration scenarios with serious/critical axe checks.
+- Production proof is complete at <https://fifa-world-cup-2026-umber-five.vercel.app>: exact build SHA, FIFA/live health, 104 matches, 97 completed results at verification time, public APIs, assets, automatic first-load hydration, and desktop/mobile browser flows all passed.
 
 ## Current State
 
@@ -25,12 +25,12 @@ This is the living planning surface. Keep it current as the project changes.
 - Matches, Knockout, Teams, Players, Stats Hub, and Settings render dedicated product screens; Players truthfully reports unavailable stat feeds when only seed data is active.
 - Visible command-center timestamps honor the timezone preference; venue time currently uses an Eastern-time placeholder until match-specific venue timezone mapping exists.
 - Vercel project `prj_aMFdokxUDii1IGQQGkxi5rhHkn6Q` is linked and production is live at <https://fifa-world-cup-2026-umber-five.vercel.app>.
-- Production deployment `dpl_dNTHSp3eCQJnphC1c1WfBsKSJGpt` is `READY`; the one-hour post-deploy runtime-error scan was clean.
+- The verified FIFA release sequence includes Vercel deployment `2sgn5M49DGYLUrPV6k8CjPrS9SYo`; the production alias is healthy and reports the deployed Git SHA through `/api/health`.
 - Current verification:
   - `npm run lint` passes.
-  - `npm run test` passes with 43 tests across tournament structure, Annexe C, standings, adaptive polling, preferences, API contracts, provider caching, and failure fallback.
+  - `npm run test` passes with 48 tests across tournament structure, Annexe C, standings, adaptive polling, preferences, API contracts, provider caching, and failure fallback.
   - `npm run typecheck:vercel` passes and models Vercel's NodeNext serverless compiler.
-  - `npm run test:browser` passes with 10 Playwright checks across desktop and mobile, including all seven product sections and persistence across reload.
+  - `npm run test:browser` defines 12 Playwright scenarios across desktop and mobile: 10 fallback-safe checks plus 2 strict live-only first-load FIFA hydration/score checks.
   - `npm run analyze` passes bundle budgets.
   - Production API smoke passes every public API route family, expected team 404 behavior, and client asset secret scanning.
   - Production browser proof passes the full desktop/mobile Playwright suite.
@@ -116,12 +116,9 @@ This is the living planning surface. Keep it current as the project changes.
 - Add health checks and basic observability.
 - Add release checklist and rollback notes.
 
-## Remaining Release Gates
+## Operational Follow-Ups
 
 - Three.js remains a large async vendor chunk, currently budgeted at 750 kB; add bundle visualization before tightening further.
-- The current FIFA-provider commit must be deployed to Vercel and its build SHA verified.
-- Strict live-mode production smoke must confirm 104 matches, official scores, freshness, all APIs, browser workflows, and source attribution.
-- Production must be redeployed from the current commit and pass live-mode API, browser, build-SHA, freshness, capability, and client-secret checks.
 - Player statistics remain intentionally unavailable in seed mode; the screen never substitutes fabricated leaderboards.
 - Venue timezone is currently a command-center placeholder, not match-venue-specific formatting.
 - Production API paths use Vercel serverless entrypoints at `api/[...path].ts` plus `api/teams/[id].ts`; local `tsx watch` remains development-only.

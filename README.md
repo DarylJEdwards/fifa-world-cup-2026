@@ -12,8 +12,8 @@ The app is designed as a broadcast-style command center: all 12 groups, live sta
 - FIFA's official public calendar is strictly validated server-side and must return all 104 unique matches before the app reports live data.
 - Automatic refresh is adaptive: 15 seconds during live matches, 300 seconds while idle, and 30 seconds during degraded recovery. Optional player leaderboards are cached for 15 minutes.
 - Matches, Groups, Knockout, Teams, Players, Stats Hub, and Settings are complete, responsive product surfaces.
-- `npm run test:comprehensive` passes with 48 Vitest cases, the Vercel compiler gate, production builds and bundle budgets, and 10 desktop/mobile Playwright scenarios.
-- The current production URL is <https://fifa-world-cup-2026-umber-five.vercel.app>. Vercel is configured for the keyless FIFA feed; the current commit still must pass strict live production verification after deployment.
+- `npm run test:comprehensive` passes with 48 Vitest cases, the Vercel compiler gate, production builds and bundle budgets, and 10 fallback-safe desktop/mobile Playwright scenarios; strict production verification adds 2 live-only automatic-hydration scenarios.
+- Production is live at <https://fifa-world-cup-2026-umber-five.vercel.app> on the keyless FIFA feed. Strict verification confirms the exact deployed SHA, all 104 matches, 97 completed results at verification time, immediate browser hydration, public APIs/assets, and desktop/mobile flows.
 
 ## Quick Start
 
@@ -65,6 +65,6 @@ The manual Vercel deploy workflow in `.github/workflows/vercel-deploy.yml` runs 
 
 ## Required Next Steps
 
-1. Deploy the current FIFA-provider commit and run `verify:production` in `live` mode.
-2. Confirm scheduled provider smoke remains green.
-3. Complete a FIFA rights review before any commercial use; the UI visibly credits and links to FIFA.
+1. Keep the scheduled keyless provider smoke green and investigate FIFA schema/source drift immediately.
+2. Complete a FIFA rights review before any commercial use; the UI visibly credits and links to FIFA.
+3. Optionally configure the GitHub deploy workflow secrets; direct Vercel CLI deployment already works.

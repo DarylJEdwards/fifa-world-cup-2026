@@ -37,7 +37,7 @@ test("all product sections expose complete fallback-safe workflows", async ({ pa
   await openSection("Teams");
   await expect(page.locator(".team-card")).toHaveCount(48);
   await page.getByRole("button", { name: "Open Mexico profile" }).click();
-  await expect(page.getByRole("article", { name: "Mexico team profile" })).toContainText("4 tournament fixtures");
+  await expect(page.getByRole("article", { name: "Mexico team profile" })).toContainText("tournament fixtures");
   await page.getByLabel("Search").fill("Mexico");
   await expect(page.locator(".team-card")).toHaveCount(1);
 
@@ -63,7 +63,9 @@ test("live deployments hydrate official results without a manual refresh", async
   await expect(page.getByText("Live data", { exact: true })).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole("link", { name: "Source: FIFA" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Matches" }).click();
+  const matchesButton = page.getByRole("button", { name: "Matches" });
+  if (!(await matchesButton.isVisible())) await page.getByRole("button", { name: "Open menu" }).click();
+  await matchesButton.click();
   await expect(page.getByRole("heading", { name: "Matches", exact: true })).toBeVisible();
   const completedCards = page.locator(".match-card", { has: page.locator(".status-pill.complete") });
   expect(await completedCards.count()).toBeGreaterThan(0);

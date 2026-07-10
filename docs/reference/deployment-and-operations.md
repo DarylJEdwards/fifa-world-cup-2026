@@ -4,7 +4,7 @@
 
 The app uses a Vite frontend and Vercel serverless Express entrypoints at `api/[...path].ts` and `api/teams/[id].ts`.
 
-The dedicated project is linked as `agentimpact/fifa-world-cup-2026` (`prj_aMFdokxUDii1IGQQGkxi5rhHkn6Q`) and serves <https://fifa-world-cup-2026-umber-five.vercel.app>. Production environment values now select FIFA's keyless official feed; the current commit still needs live-mode redeploy verification.
+The dedicated project is linked as `agentimpact/fifa-world-cup-2026` (`prj_aMFdokxUDii1IGQQGkxi5rhHkn6Q`) and serves <https://fifa-world-cup-2026-umber-five.vercel.app>. Production selects FIFA's keyless official feed and has passed strict live-mode verification for exact build identity, 104 matches, current scores, automatic first-load hydration, public APIs/assets, and desktop/mobile flows.
 
 Manual GitHub Actions deployment is scaffolded in `.github/workflows/vercel-deploy.yml`. It requires `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` repository secrets, deploys with Vercel prebuilt artifacts, runs `npm run smoke:deployed` against the deployment URL, and can run Playwright smoke against the deployment URL. Playwright can also verify an existing deployment locally by setting `PLAYWRIGHT_BASE_URL`.
 

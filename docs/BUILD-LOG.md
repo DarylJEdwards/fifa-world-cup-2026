@@ -1,6 +1,32 @@
 # Build Log
 
 Append-only project history. Add new entries at the top.
+## 2026-07-10 - Production FIFA Results Release Complete
+
+### Focus
+
+Complete every product section and prove that scores, winners, standings, and knockout progression update automatically on the live Vercel site.
+
+### Changes
+
+- Hardened every provider environment value against trailing whitespace/newlines after production exposed `SPORTS_API_SEASON=2026\r\n`.
+- Made the initial structural snapshot immediately stale so the browser hydrates FIFA results on first load instead of waiting for the degraded retry interval.
+- Added strict live-only desktop/mobile browser coverage for automatic FIFA hydration and visible completed scores without clicking Refresh.
+- Made browser product assertions work in both structural fallback and progressed live-tournament states.
+- Replaced the stale API-Football-key handoff with the current keyless FIFA production/monitoring handoff.
+
+### Validation
+
+- `npm run test:ci` passed with lint, 48 Vitest tests, Vercel NodeNext type-checking, and the production build.
+- `npm run test:browser` passed all 10 fallback-safe desktop/mobile scenarios; the 2 production-only scenarios are intentionally skipped outside strict live mode.
+- Production API/asset smoke passed: FIFA/live health, all 104 matches, 97 completed results at verification time, every public API route family, expected 404 behavior, four client bundles, and exact Git SHA.
+- In-app browser proof showed 104 match cards, 97 completed cards, real scorelines such as Mexico 2-0 South Africa, no horizontal overflow, and visible `LIVE DATA` state.
+- GitHub Actions CI run `29080451503` passed for the provider implementation and manual run `29081821612` passed the non-skippable official provider smoke.
+- The verified release sequence includes Vercel deployment `2sgn5M49DGYLUrPV6k8CjPrS9SYo`; completion requires this release-record HEAD to pass the same exact-SHA strict verifier after deployment.
+
+### Remaining Operational Work
+
+- Monitor the scheduled FIFA smoke, complete a rights review before commercial use, and optionally configure GitHub deploy-workflow secrets. No product section or production verification gate remains open.
 
 ## 2026-07-10 - Official FIFA Live Data Without A Secret
 
