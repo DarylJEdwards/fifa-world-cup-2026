@@ -2,7 +2,7 @@
 
 ## Current Source
 
-Current default mode: truthful structural seed cache, with a strict API-Football adapter for league `1`, season `2026` when server-side env vars are configured.
+Current production mode: FIFA's official keyless calendar for competition `17`, season `285023`, with truthful structural seed fallback.
 
 Source files:
 
@@ -10,22 +10,23 @@ Source files:
 - `src/data/annexC.ts`
 - `src/lib/standings.ts`
 - `src/lib/tournament.ts`
+- `server/provider/fifa.ts`
 
 ## Refresh Behavior
 
-The frontend uses TanStack Query and follows provider freshness: 15 seconds during live play, 300 seconds while idle, and 30 seconds while degraded.
+The frontend uses TanStack Query and follows provider freshness: 15 seconds from 15 minutes before kickoff through the match window, 300 seconds while idle, and 30 seconds while degraded.
 
 The API uses the same 15/300-second adaptive cache policy, a 600-second stale window, and a 15-minute cache for optional player leaderboards. Missing or invalid provider data returns a visibly labeled structural fallback; it is never merged into a provider snapshot.
 
 ## Provider Integration Requirements
 
-Before enabling real live data:
+Live-source requirements:
 
-1. Configure a valid API-Football key and verify the complete 104-fixture live response.
-2. Document provider terms, cost, quota, endpoints, and rate limits.
-3. Store keys only in environment/deployment secret storage.
-4. Live-smoke the provider mapper and cache/fallback behavior.
-5. Keep contract tests for auth, quota, timeout, non-200, malformed, wrong-competition, and incomplete payloads green.
+1. Require FIFA competition `17`, season `285023`, and unique match numbers 1-104.
+2. Fail closed on unknown numeric statuses/result types or malformed scores/teams.
+3. Run keyless provider smoke manually and on schedule.
+4. Display attribution and link to FIFA's official schedule.
+5. Preserve API-Football auth/quota tests for the optional player-data adapter.
 
 ## Source Ledger
 

@@ -10,7 +10,7 @@ Existing coverage includes:
 - Playwright screenshot artifacts.
 - Axe checks for critical and serious accessibility violations.
 
-Current suite: 43 Vitest tests across tournament structure, all 495 Annexe C combinations, standings, preferences, adaptive polling, API contracts, provider caching/fallback, and optional player capabilities; plus 10 Playwright scenarios across desktop and mobile. The remaining gate is credentialed live-provider and deployed-live verification.
+Current suite: 48 Vitest tests across tournament structure, all 495 Annexe C combinations, FIFA's 104-match schema/status/result mapping, standings, preferences, adaptive polling, API contracts, provider caching/fallback, and optional player capabilities; plus 10 Playwright scenarios across desktop and mobile. The remaining gate is deployed-live verification.
 
 ## Unit Tests
 
@@ -83,6 +83,8 @@ Current coverage:
 - `/api/teams/:id`,
 - 404 team lookup,
 - seed fallback with no provider env vars,
+- keyless FIFA provider health and route integration,
+- FIFA exact match-number/stage validation, penalties, unknown-enum rejection, and pre-kickoff polling,
 - API-Football mock provider success,
 - malformed provider response,
 - non-200 provider fallback,
@@ -91,10 +93,11 @@ Current coverage:
 - empty or incomplete tournament data fallback,
 - stale provider cache after refresh failure.
 
-Remaining external coverage:
+External coverage:
 
-- live-provider smoke with real credentials,
-- schema drift checks against real API-Football responses.
+- keyless live FIFA provider smoke,
+- deployed-live verification against the production alias,
+- scheduled schema-drift detection.
 
 ## Provider Contract Tests
 
@@ -110,7 +113,7 @@ Recommended:
   - stale timestamps,
   - rate-limit response.
 
-Run mock provider tests in CI. Keep manual live-provider smoke tests behind secrets.
+Run mock provider tests in CI. Run the official FIFA smoke on schedule without secrets; retain secret handling only for optional API-Football player data.
 
 ## End-to-End Tests
 

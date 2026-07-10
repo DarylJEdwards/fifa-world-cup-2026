@@ -2,10 +2,11 @@
 
 ## Required Before Calling This Production-Ready
 
-1. Add a valid `SPORTS_API_KEY` to Vercel Production through an approved secret surface.
-2. Run the credentialed provider smoke and confirm league `1`, season `2026`, returns all 104 fixtures.
-3. Deploy the current commit and pass strict `live` production verification, including build SHA, freshness, capabilities, scores, browser flows, and client-secret scanning.
-4. Establish scheduled provider smoke/alerting and a rollback record.
+1. Deploy the current FIFA-provider commit.
+2. Pass strict `live` production verification, including build SHA, freshness, 104 matches, current scores, browser flows, attribution, and client-secret scanning.
+3. Trigger the keyless scheduled/manual provider smoke and confirm it cannot skip.
+4. Record the deployment id, CI run, live results count, and rollback target.
+5. Complete a rights review before commercial use of FIFA content.
 
 ## Code-Splitting and Performance
 

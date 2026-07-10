@@ -2,10 +2,6 @@ import { groupCodes, matches, teams } from "../data/seed.js";
 import type { GroupStanding, KnockoutSlot, Match, StandingRow, Team, ThirdPlaceRow, TournamentSnapshot } from "../types.js";
 import { buildFullKnockoutSlots, buildTournamentSchedule } from "./tournament.js";
 
-const fairPlaySeed: Record<string, number> = Object.fromEntries(
-  teams.map((team, index) => [team.id, -((index % 4) + (team.fifaRank % 3))])
-);
-
 export function buildTournamentSnapshot(source: TournamentSnapshot["source"] = "seed-cache", providerName = "Seed cache"): TournamentSnapshot {
   const groups = buildGroupStandings(teams, matches);
   const thirdPlaceRace = rankThirdPlaceTeams(groups);
@@ -49,11 +45,15 @@ export function buildTournamentSnapshot(source: TournamentSnapshot["source"] = "
   };
 }
 
-export function buildGroupStandings(allTeams: Team[], allMatches: Match[]): GroupStanding[] {
+export function buildGroupStandings(
+  allTeams: Team[],
+  allMatches: Match[],
+  options: { fairPlayScores?: Readonly<Record<string, number>> } = {}
+): GroupStanding[] {
   return groupCodes.map((code) => {
     const groupTeams = allTeams.filter((team) => team.group === code);
     const groupMatches = allMatches.filter((match) => match.group === code);
-    const rows = groupTeams.map((team) => seedRow(team));
+    const rows = groupTeams.map((team) => seedRow(team, options.fairPlayScores));
 
     groupMatches.forEach((match) => {
       if (match.homeScore === null || match.awayScore === null) return;
@@ -191,7 +191,7 @@ export function buildKnockoutSlots(groups: GroupStanding[], thirdPlaceRace: Thir
   return buildFullKnockoutSlots(groups, thirdPlaceRace);
 }
 
-function seedRow(team: Team): StandingRow {
+function seedRow(team: Team, fairPlayScores: Readonly<Record<string, number>> | undefined): StandingRow {
   return {
     team,
     played: 0,
@@ -202,7 +202,7 @@ function seedRow(team: Team): StandingRow {
     goalsAgainst: 0,
     goalDifference: 0,
     points: 0,
-    fairPlay: fairPlaySeed[team.id] ?? 0,
+    fairPlay: fairPlayScores?.[team.id] ?? 0,
     rank: 0,
     qualification: "outside",
     tiebreakers: []

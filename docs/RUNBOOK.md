@@ -18,9 +18,9 @@ Copy `.env.example` to `.env.local` or set environment variables in the shell.
 
 ```powershell
 $env:PORT = "4174"
-$env:SPORTS_PROVIDER = "seed"
-$env:SPORTS_API_BASE_URL = ""
-$env:SPORTS_API_KEY = ""
+$env:SPORTS_PROVIDER = "fifa"
+$env:SPORTS_API_BASE_URL = "https://api.fifa.com"
+$env:SPORTS_API_SEASON = "2026"
 $env:LIVE_REFRESH_SECONDS = "30"
 ```
 
@@ -39,13 +39,13 @@ npm run verify:production -- https://<deployment-url> --mode=live --expected-sha
 npm run test:browser
 ```
 
-`npm run test:comprehensive` is the one-shot local release gate: lint, 43 unit/API tests, Vercel serverless type-checking, production builds, bundle budgets, and 10 desktop/mobile Playwright checks.
+`npm run test:comprehensive` is the one-shot local release gate: lint, 48 unit/API tests, Vercel serverless type-checking, production builds, bundle budgets, and 10 desktop/mobile Playwright checks.
 
 Known Windows note: Vite/Vitest can hit `spawn EPERM` when esbuild is blocked by sandboxing. If that happens, rerun the same command with approval outside the sandbox.
 
-`npm run smoke:provider` is expected to fail fast when `SPORTS_API_KEY` or `SPORTS_API_LEAGUE_ID` is absent. It never prints the API key. Use it only after setting a valid API-Football key and verified World Cup league id in the shell or ignored local env.
+`npm run smoke:provider` calls FIFA's official calendar without credentials and fails closed unless all 104 matches and the normalized live snapshot validate.
 
-GitHub Actions also exposes a manual/scheduled provider-smoke job in `.github/workflows/ci.yml`. Configure repository secrets named `SPORTS_API_KEY` and `SPORTS_API_LEAGUE_ID` before using it for real provider checks. If either secret is absent, the job skips the smoke step with a notice.
+GitHub Actions exposes a manual/scheduled provider-smoke job in `.github/workflows/ci.yml`. It requires no provider secret and must not silently skip.
 
 To run the browser smoke against a deployed URL instead of the local dev server, set `PLAYWRIGHT_BASE_URL`:
 
@@ -99,10 +99,8 @@ Production URL: <https://fifa-world-cup-2026-umber-five.vercel.app>
 Required production env vars for live provider mode:
 
 ```powershell
-SPORTS_PROVIDER=api-football
-SPORTS_API_BASE_URL=https://v3.football.api-sports.io
-SPORTS_API_KEY=<api-football-key>
-SPORTS_API_LEAGUE_ID=1
+SPORTS_PROVIDER=fifa
+SPORTS_API_BASE_URL=https://api.fifa.com
 SPORTS_API_SEASON=2026
 PROVIDER_LIVE_CACHE_TTL_SECONDS=15
 PROVIDER_IDLE_CACHE_TTL_SECONDS=300
@@ -115,13 +113,13 @@ The repo also has a manual Vercel deploy workflow at `.github/workflows/vercel-d
 
 ### App Shows Seed Cache
 
-This is expected until a provider is configured and live smoke checks pass. The UI should show seed/cache or missing-config status rather than claiming official live data.
+This indicates FIFA was unavailable or failed strict validation. Check `/api/health`, Vercel env names, provider smoke, and runtime logs; never relabel fallback as live.
 
 ### Automatic Scores Do Not Update
 
 1. Check `/api/health`: `ready` must be `true`, `providerStatus.state` must be `live`, and `buildSha` must match the deployed commit.
 2. Check `/api/tournament`: it must contain exactly 104 matches and provider freshness metadata.
-3. During a live match, `nextRefreshSeconds` should be 15; while idle it should be 300.
+3. From 15 minutes before kickoff through the match window, `nextRefreshSeconds` should be 15; while idle it should be 300.
 4. Run `npm run verify:production -- <url> --mode=live --expected-sha=<sha>`.
 5. If the provider fails, the UI must say stale/fallback; it must never show the structural seed schedule as live official results.
 

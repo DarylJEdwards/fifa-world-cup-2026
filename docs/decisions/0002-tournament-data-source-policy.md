@@ -17,12 +17,20 @@ Use a provider-adapter model.
 - If no provider is configured, or validation fails, the API falls back to seed-cache data.
 - Source and freshness must be visible to operators and documented.
 
+### 2026-07-10 amendment
+
+- Use FIFA's unauthenticated official calendar as the primary schedule/result source.
+- Require all 104 matches and fail closed on unknown schema/status values.
+- Poll every 15 seconds around match windows and every 300 seconds while idle.
+- Keep API-Football optional for player leaderboards; its missing key cannot block scores.
+- Display FIFA attribution and link back to the official schedule.
+
 ## Consequences
 
 - Provider choice can change without rewriting the UI.
 - Bad provider payloads are contained at the API boundary.
 - The UI can be built and tested before real provider credentials exist.
-- A provider-specific mapper is still required before the app is truly live.
+- FIFA's public API has no published developer SLA, so scheduled smoke, cache/stale labeling, and fallback remain mandatory.
 
 ## Related Docs
 

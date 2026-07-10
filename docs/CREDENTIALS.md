@@ -7,10 +7,10 @@ No secrets are stored in this repo.
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `PORT` | No | Express API port. Defaults to `4174`. |
-| `SPORTS_PROVIDER` | No | Provider label shown in API health and UI. Defaults to `seed`. |
-| `SPORTS_API_BASE_URL` | Only for live provider | Provider endpoint used by the API proxy. |
-| `SPORTS_API_KEY` | Only for live provider | Provider API key. Never commit this. |
-| `SPORTS_API_LEAGUE_ID` | Only for live provider | API-Football FIFA World Cup league id. Must be `1`. |
+| `SPORTS_PROVIDER` | Live production | Set to `fifa` for official keyless scores. |
+| `SPORTS_API_BASE_URL` | Live production | Set to `https://api.fifa.com` for the primary provider. |
+| `SPORTS_API_KEY` | Optional | Used only by the optional API-Football player-leaderboard adapter. Never commit this. |
+| `SPORTS_API_LEAGUE_ID` | Optional | API-Football league id `1`; ignored by the FIFA adapter. |
 | `SPORTS_API_SEASON` | Only for live provider | Provider season. Defaults to `2026`. |
 | `LIVE_REFRESH_SECONDS` | No | Intended refresh interval default. Current client preference defaults to 30 seconds. |
 | `CORS_ORIGIN` | Production recommended | Restricts browser origins allowed to call the API if frontend/API are split. |
@@ -34,18 +34,16 @@ No secrets are stored in this repo.
 
 ## Provider Setup Status
 
-Current status: API-Football league `1`, season `2026` is implemented and validated, but Production has no approved `SPORTS_API_KEY`. Vercel therefore serves truthful structural fallback with `missing-config` provider state.
+Current status: Vercel Production is configured for FIFA's official keyless calendar. The provider requires no secret and live smoke maps all 104 matches.
 
-The app currently uses seed-cache fallback data unless API-Football env vars are configured. The UI shows provider/cache state rather than claiming official live data.
+The app uses seed-cache fallback only when FIFA is unavailable or its response fails strict validation. The UI always shows provider/cache state.
 
-For local development, store the API-Football key only in ignored local environment files or shell/deployment secrets:
+Primary local/production configuration:
 
 ```powershell
 PORT=4174
-SPORTS_PROVIDER=api-football
-SPORTS_API_BASE_URL=https://v3.football.api-sports.io
-SPORTS_API_KEY=<api-football-key>
-SPORTS_API_LEAGUE_ID=1
+SPORTS_PROVIDER=fifa
+SPORTS_API_BASE_URL=https://api.fifa.com
 SPORTS_API_SEASON=2026
 LIVE_REFRESH_SECONDS=30
 PROVIDER_TIMEOUT_MS=8000
@@ -54,22 +52,20 @@ PROVIDER_IDLE_CACHE_TTL_SECONDS=300
 PROVIDER_STALE_TTL_SECONDS=600
 ```
 
-Do not commit `.env.local`. The API sends `x-apisports-key` server-side only. If a real API-Football key was pasted into chat history, rotate it before production use.
-
-After configuring a valid key and verified league id, run:
+Run the current official provider smoke without credentials:
 
 ```powershell
 npm run smoke:provider
 ```
 
-The smoke command checks API-Football `leagues`, `fixtures`, and `standings` summaries and then runs the live standings/fixtures mapper into a `TournamentSnapshot`. It prints endpoint status, result counts, mapped group/match counts, and provider state without printing the key.
+The smoke command validates FIFA competition `17`, season `285023`, all 104 unique match numbers, stages, scores, penalties, statuses, teams, and the normalized `TournamentSnapshot`.
 
-For GitHub Actions provider smoke, configure these repository secrets:
+API-Football remains available only for optional player leaderboards. If enabled, keep these values in ignored/deployment secret storage:
 
 - `SPORTS_API_KEY`
 - `SPORTS_API_LEAGUE_ID`
 
-The workflow supplies non-secret defaults for `SPORTS_PROVIDER`, `SPORTS_API_BASE_URL`, `SPORTS_API_SEASON`, and `PROVIDER_TIMEOUT_MS`.
+Never expose `SPORTS_API_KEY` through a `VITE_*` variable. Scheduled FIFA provider smoke needs no provider secret.
 
 The Vercel project now exists under the Agent Impact team. To enable the manual GitHub Actions deployment workflow, configure these repository secrets:
 

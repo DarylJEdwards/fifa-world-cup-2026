@@ -1057,6 +1057,17 @@ td:first-child strong {
   font-size: 0.82rem;
 }
 
+.data-bar a {
+  color: var(--gold-bright);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.data-bar a:hover,
+.data-bar a:focus-visible {
+  color: #fff2b8;
+}
+
 .state-panel {
   display: grid;
   place-items: center;

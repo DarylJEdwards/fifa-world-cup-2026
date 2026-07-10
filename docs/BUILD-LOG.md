@@ -2,6 +2,33 @@
 
 Append-only project history. Add new entries at the top.
 
+## 2026-07-10 - Official FIFA Live Data Without A Secret
+
+### Focus
+
+Remove the API-key blocker and prove automatic scores/results against a primary source.
+
+### Changes
+
+- Added a keyless adapter for FIFA's official public calendar endpoint using competition `17` and season `285023`.
+- Enforced exactly 104 unique matches, match numbers 1-104, official stage names/counts, known numeric status/result enums, valid teams, scores, penalty scores, dates, and venues.
+- Calculated all 12 group tables from FIFA's 72 official group results; the resulting order matched ESPN's independently published rank fields for every group.
+- Added pre-kickoff rapid polling: 15 seconds from 15 minutes before kickoff through the match window, otherwise 300 seconds.
+- Kept API-Football optional for player leaderboards; scores and winners no longer depend on its missing key.
+- Removed synthetic fair-play values from fallback data and added visible FIFA source attribution/linking.
+- Replaced the secret-gated scheduled provider smoke with a keyless FIFA smoke that cannot silently skip.
+
+### Validation
+
+- Official provider smoke passed with 104 matches, 97 completed results, 12 groups, and live provider state.
+- `npm run test:ci` passed: lint, 48 Vitest tests, Vercel NodeNext type-checking, and production build.
+- `npm run analyze` passed: main app 408.1 kB / 500 kB; async Three.js 681.1 kB / 750 kB.
+- All 10 desktop/mobile Playwright scenarios passed locally against FIFA's real feed, including every section and serious/critical axe checks.
+
+### Remaining Gate
+
+- Deploy the current commit and pass strict live-mode production verification with the exact build SHA.
+
 ## 2026-07-09 - Current Production Deploy And Verifier Repair
 
 ### Changes

@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type RequestListener, type Server, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { groupCodes, teams as seedTeams } from "../src/data/seed";
+import { groupCodes, matches as seedMatches, teams as seedTeams } from "../src/data/seed";
 import { createApp, isTournamentSnapshot, resetProviderCacheForTests } from "./index";
 import type { GroupStanding, Match, Team, TournamentSnapshot } from "../src/types";
 import { mapApiFootballMatchStatus } from "./provider/apiFootball";
@@ -80,6 +80,46 @@ describe("World Cup API contract", () => {
       expect(tournament.groups).toHaveLength(12);
     } finally {
       await stopServer(api.server);
+    }
+  });
+
+  it("loads the official FIFA provider without an API key", async () => {
+    let requestedUrl = "";
+    const provider = await startServer((request, response) => {
+      requestedUrl = request.url ?? "";
+      response.setHeader("content-type", "application/json");
+      response.end(JSON.stringify(fifaCalendarEnvelope()));
+    });
+    process.env.SPORTS_PROVIDER = "fifa";
+    process.env.SPORTS_API_BASE_URL = provider.baseUrl;
+    process.env.SPORTS_API_SEASON = "2026";
+
+    const api = await startServer(createApp());
+    try {
+      const health = await getJson<HealthResponse>(`${api.baseUrl}/api/health`);
+      expect(health).toMatchObject({
+        ok: true,
+        ready: true,
+        degraded: false,
+        providerConfigured: true,
+        provider: "fifa"
+      });
+      const tournament = await getJson<TournamentSnapshot>(`${api.baseUrl}/api/tournament`);
+      expect(tournament).toMatchObject({
+        source: "provider",
+        providerName: "FIFA",
+        providerStatus: { state: "live", provider: "FIFA" },
+        totalMatches: 104
+      });
+      expect(tournament.matches).toHaveLength(104);
+      expect(tournament.matches?.filter((match) => match.status === "complete")).toHaveLength(72);
+      const request = new URL(requestedUrl, provider.baseUrl);
+      expect(request.pathname).toBe("/api/v3/calendar/matches");
+      expect(request.searchParams.get("IdCompetition")).toBe("17");
+      expect(request.searchParams.get("IdSeason")).toBe("285023");
+    } finally {
+      await stopServer(api.server);
+      await stopServer(provider.server);
     }
   });
 
@@ -452,6 +492,64 @@ interface HealthResponse {
   provider: string;
   cachedAt: string;
   providerStatus: TournamentSnapshot["providerStatus"];
+}
+
+function fifaCalendarEnvelope() {
+  return {
+    ContinuationToken: null,
+    Results: Array.from({ length: 104 }, (_, index) => {
+      const matchNumber = index + 1;
+      const groupMatch = matchNumber <= 72 ? seedMatches[matchNumber - 1] : undefined;
+      const homeTeam = groupMatch ? seedTeams.find((team) => team.id === groupMatch.homeTeamId) : undefined;
+      const awayTeam = groupMatch ? seedTeams.find((team) => team.id === groupMatch.awayTeamId) : undefined;
+      const fifaTeam = (team: Team | undefined) => team ? {
+        IdTeam: `fifa-${team.id}`,
+        IdCountry: team.shortName === "CUR" ? "CUW" : team.shortName,
+        Abbreviation: team.shortName === "CUR" ? "CUW" : team.shortName,
+        TeamName: [{ Locale: "en-GB", Description: team.name }],
+        ShortClubName: team.name,
+        Score: matchNumber % 2
+      } : null;
+      const stageName = fifaTestStageName(matchNumber);
+      return {
+        IdCompetition: "17",
+        IdSeason: "285023",
+        IdStage: `stage-${stageName}`,
+        IdGroup: groupMatch ? `group-${groupMatch.group}` : undefined,
+        IdMatch: `fifa-match-${matchNumber}`,
+        MatchNumber: matchNumber,
+        MatchStatus: groupMatch ? 0 : 1,
+        ResultType: groupMatch ? 1 : 0,
+        Date: new Date(Date.UTC(2026, 5, 11, 19) + index * 3_600_000).toISOString(),
+        StageName: [{ Locale: "en-GB", Description: stageName }],
+        GroupName: groupMatch ? [{ Locale: "en-GB", Description: `Group ${groupMatch.group}` }] : [],
+        Home: fifaTeam(homeTeam),
+        Away: fifaTeam(awayTeam),
+        HomeTeamScore: groupMatch ? matchNumber % 3 : null,
+        AwayTeamScore: groupMatch ? (matchNumber + 1) % 2 : null,
+        HomeTeamPenaltyScore: null,
+        AwayTeamPenaltyScore: null,
+        MatchTime: groupMatch ? "90'" : null,
+        Winner: groupMatch ? `fifa-${homeTeam?.id}` : null,
+        PlaceHolderA: groupMatch ? null : "Previous winner",
+        PlaceHolderB: groupMatch ? null : "Previous winner",
+        Stadium: {
+          Name: [{ Locale: "en-GB", Description: `Stadium ${matchNumber}` }],
+          CityName: [{ Locale: "en-GB", Description: "Host City" }]
+        }
+      };
+    })
+  };
+}
+
+function fifaTestStageName(matchNumber: number): string {
+  if (matchNumber <= 72) return "First Stage";
+  if (matchNumber <= 88) return "Round of 32";
+  if (matchNumber <= 96) return "Round of 16";
+  if (matchNumber <= 100) return "Quarter-final";
+  if (matchNumber <= 102) return "Semi-final";
+  if (matchNumber === 103) return "Play-off for third place";
+  return "Final";
 }
 
 function apiFootballStandingsEnvelope(options: { omitGroup?: string } = {}) {

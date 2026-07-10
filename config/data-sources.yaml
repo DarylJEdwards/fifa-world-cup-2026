@@ -2,12 +2,12 @@
 # Keep this file current when source/provider state changes.
 
 version: 1
-updated_at: "2026-07-09"
-active_source: seed-cache
+updated_at: "2026-07-10"
+active_source: fifa-official
 
 sources:
   seed-cache:
-    status: active
+    status: fallback
     mode: local-fallback
     files:
       - src/data/seed.ts
@@ -16,21 +16,31 @@ sources:
       - Development fallback data only.
       - Not official live tournament truth.
 
-  live-provider:
-    status: adapter-complete-awaiting-production-secret
+  fifa-official:
+    status: active
     mode: provider-adapter
-    provider: API-Football
-    base_url: https://v3.football.api-sports.io
+    provider: FIFA
+    base_url: https://api.fifa.com
     required_env:
       - SPORTS_PROVIDER
       - SPORTS_API_BASE_URL
-      - SPORTS_API_KEY
-      - SPORTS_API_LEAGUE_ID
       - SPORTS_API_SEASON
     notes:
-      - API-Football key must stay in ignored local env or deployment secret storage.
-      - League 1 and season 2026 are enforced for the FIFA World Cup.
-      - A provider snapshot is accepted only with all 104 fixtures, including 72 group and 32 knockout matches.
-      - Scores, penalties, statuses, standings, match stages, team profiles, and optional player leaderboards map into TournamentSnapshot.
-      - Automatic refresh is 15 seconds live and 300 seconds idle; degraded browser retries are 30 seconds and optional player endpoints cache for 15 minutes.
-      - Do not claim official live data until production provider and deployed live-mode smoke checks pass with real credentials.
+      - Official competition 17 and season 285023 are enforced.
+      - A snapshot is accepted only with unique MatchNumber 1-104 and exact stage boundaries.
+      - Scores, penalties, numeric statuses, dates, venues, teams, computed standings, and bracket map into TournamentSnapshot.
+      - Automatic refresh is 15 seconds from 15 minutes before kickoff through live match windows and 300 seconds while idle.
+      - Scheduled provider smoke requires no secret and fails closed on unknown enums or schema drift.
+      - FIFA source attribution and rights guidance are documented.
+
+  api-football:
+    status: optional
+    mode: supplemental-player-data
+    provider: API-Football
+    base_url: https://v3.football.api-sports.io
+    required_env:
+      - SPORTS_API_KEY
+      - SPORTS_API_LEAGUE_ID
+    notes:
+      - Retained for optional player leaderboards only.
+      - A missing API-Football key must never block official FIFA scores or results.

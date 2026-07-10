@@ -7,7 +7,7 @@ The app has two local runtime surfaces:
 - Vite React frontend.
 - Express API proxy.
 
-The frontend renders a cinematic command-center interface plus dedicated product screens and consumes normalized tournament data from the API. The API serves seed-cache data unless API-Football provider env vars are configured and mapped provider data validates.
+The frontend renders a cinematic command-center interface plus dedicated product screens and consumes normalized tournament data from the API. The API uses FIFA's official keyless calendar in production and serves structural seed fallback only when strict validation fails.
 
 ## Frontend
 
@@ -36,12 +36,15 @@ Main libraries:
 Important module:
 
 - `server/index.ts`
+- `server/provider/fifa.ts`
+- `server/provider/apiFootball.ts`
 
 Responsibilities:
 
 - Serve `/api/health`.
 - Serve normalized tournament views.
-- Map API-Football standings/fixtures envelopes into `TournamentSnapshot`.
+- Map FIFA's official 104-match calendar into `TournamentSnapshot`.
+- Keep API-Football available for optional player leaderboards.
 - Validate mapped provider snapshots.
 - Report provider/cache/fallback status.
 - Fall back to seed-cache data when provider config is missing or invalid.
@@ -65,6 +68,6 @@ Responsibilities:
 ## Current Architecture Risks
 
 - The 3D stage is code-split, but Three.js remains a large async vendor chunk with a documented 750 kB budget.
-- API-Football live smoke still needs a real credential in the production secret store.
+- FIFA's public API is official but undocumented and has no published developer SLA; scheduled smoke and fail-closed validation are required.
 - The full official third-place pairing matrix is implemented and exhaustively tested.
 - Seed mode carries no fabricated results, live states, or player leaderboards.

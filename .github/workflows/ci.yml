@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       run_provider_smoke:
-        description: Run API-Football live provider smoke when secrets are configured
+        description: Run the official FIFA live provider smoke
         required: false
         default: true
         type: boolean
@@ -48,10 +48,8 @@ jobs:
     if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_provider_smoke)
     runs-on: ubuntu-latest
     env:
-      SPORTS_PROVIDER: api-football
-      SPORTS_API_BASE_URL: https://v3.football.api-sports.io
-      SPORTS_API_KEY: ${{ secrets.SPORTS_API_KEY }}
-      SPORTS_API_LEAGUE_ID: ${{ secrets.SPORTS_API_LEAGUE_ID }}
+      SPORTS_PROVIDER: fifa
+      SPORTS_API_BASE_URL: https://api.fifa.com
       SPORTS_API_SEASON: 2026
       PROVIDER_TIMEOUT_MS: 8000
     steps:
@@ -67,17 +65,5 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Check provider smoke secrets
-        id: provider_secrets
-        shell: bash
-        run: |
-          if [ -n "$SPORTS_API_KEY" ] && [ -n "$SPORTS_API_LEAGUE_ID" ]; then
-            echo "available=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "::notice::Skipping provider smoke because SPORTS_API_KEY or SPORTS_API_LEAGUE_ID is not configured."
-            echo "available=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: API-Football live provider smoke
-        if: steps.provider_secrets.outputs.available == 'true'
+      - name: FIFA official live provider smoke
         run: npm run smoke:provider

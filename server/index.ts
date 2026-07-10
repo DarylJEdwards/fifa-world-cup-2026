@@ -8,6 +8,11 @@ import {
   loadApiFootballSnapshot,
   resetApiFootballCachesForTests
 } from "./provider/apiFootball.js";
+import {
+  FIFA_PUBLIC_BASE_URL,
+  FIFA_WORLD_CUP_SEASON,
+  loadFifaSnapshot
+} from "./provider/fifa.js";
 
 const port = Number(process.env.PORT ?? 4174);
 let providerCache: { snapshot: TournamentSnapshot; fetchedAt: number; freshUntil: number; staleUntil: number } | undefined;
@@ -33,7 +38,7 @@ export function createApp() {
       ok: ready,
       ready,
       degraded: !ready,
-      providerConfigured: Boolean(process.env.SPORTS_API_BASE_URL && process.env.SPORTS_API_KEY),
+      providerConfigured: isProviderConfigured(),
       provider: process.env.SPORTS_PROVIDER ?? "seed",
       buildSha: process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.GITHUB_SHA ?? "local",
       cachedAt: cache.lastUpdated,
@@ -83,13 +88,23 @@ if (process.env.NODE_ENV !== "test" && !process.env.VERCEL) {
 export async function loadSnapshot(): Promise<TournamentSnapshot> {
   const providerUrl = process.env.SPORTS_API_BASE_URL;
   const providerKey = process.env.SPORTS_API_KEY;
-  const providerName = process.env.SPORTS_PROVIDER ?? "api-football";
-  if (!providerUrl || !providerKey) {
+  const configuredProvider = process.env.SPORTS_PROVIDER ?? "seed";
+  const providerKind = normalizeProvider(configuredProvider, Boolean(providerUrl && providerKey));
+  const providerName = providerKind === "fifa" ? "FIFA" : configuredProvider;
+  const missingConfig =
+    providerKind === "fifa"
+      ? undefined
+      : providerKind === "api-football"
+        ? !providerUrl || !providerKey
+          ? "SPORTS_API_BASE_URL or SPORTS_API_KEY is missing"
+          : undefined
+        : "SPORTS_PROVIDER must be fifa or api-football";
+  if (missingConfig) {
     return withProviderStatus(
       buildTournamentSnapshot("seed-cache", "Seed cache"),
       "missing-config",
       providerName,
-      "SPORTS_API_BASE_URL or SPORTS_API_KEY is missing; serving seed-cache fallback."
+      `${missingConfig}; serving seed-cache fallback.`
     );
   }
 
@@ -106,16 +121,23 @@ export async function loadSnapshot(): Promise<TournamentSnapshot> {
   }
 
   try {
-    const snapshot = await loadApiFootballSnapshot({
-      baseUrl: providerUrl,
-      apiKey: providerKey,
-      leagueId: process.env.SPORTS_API_LEAGUE_ID ?? API_FOOTBALL_WORLD_CUP_LEAGUE_ID,
-      season: process.env.SPORTS_API_SEASON ?? API_FOOTBALL_WORLD_CUP_SEASON,
-      timeoutMs,
-      providerName
-    });
+    const snapshot = providerKind === "fifa"
+      ? await loadFifaSnapshot({
+          baseUrl: providerUrl ?? FIFA_PUBLIC_BASE_URL,
+          season: process.env.SPORTS_API_SEASON ?? FIFA_WORLD_CUP_SEASON,
+          timeoutMs,
+          providerName
+        })
+      : await loadApiFootballSnapshot({
+          baseUrl: providerUrl as string,
+          apiKey: providerKey as string,
+          leagueId: process.env.SPORTS_API_LEAGUE_ID ?? API_FOOTBALL_WORLD_CUP_LEAGUE_ID,
+          season: process.env.SPORTS_API_SEASON ?? API_FOOTBALL_WORLD_CUP_SEASON,
+          timeoutMs,
+          providerName
+        });
     if (!isTournamentSnapshot(snapshot)) throw new Error("Provider mapper returned an invalid TournamentSnapshot");
-    const freshTtlSeconds = snapshot.liveMatches.length > 0 ? liveTtlSeconds : idleTtlSeconds;
+    const freshTtlSeconds = snapshot.providerStatus.nextRefreshSeconds === 15 ? liveTtlSeconds : idleTtlSeconds;
     providerCache = {
       snapshot,
       fetchedAt: now,
@@ -127,7 +149,7 @@ export async function loadSnapshot(): Promise<TournamentSnapshot> {
     const message = error instanceof Error ? error.message : "Unknown provider error";
     console.warn("Falling back to seed cache:", message);
     if (providerCache && now < providerCache.staleUntil) {
-      const retrySeconds = providerCache.snapshot.liveMatches.length > 0 ? liveTtlSeconds : idleTtlSeconds;
+      const retrySeconds = providerCache.snapshot.providerStatus.nextRefreshSeconds === 15 ? liveTtlSeconds : idleTtlSeconds;
       return withCacheAge(providerCache.snapshot, "stale", Math.round((now - providerCache.fetchedAt) / 1000), retrySeconds, message);
     }
     return withProviderStatus(
@@ -247,4 +269,20 @@ function envOptionalNumber(name: string): number | undefined {
   if (!raw) return undefined;
   const value = Number(raw);
   return Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
+function normalizeProvider(provider: string, inferApiFootball = false): "fifa" | "api-football" | "unknown" {
+  const normalized = provider.trim().toLowerCase();
+  if (normalized === "fifa" || normalized === "fifa-official") return "fifa";
+  if (normalized === "api-football" || normalized === "api football") return "api-football";
+  if (inferApiFootball) return "api-football";
+  return "unknown";
+}
+
+function isProviderConfigured(): boolean {
+  const hasApiFootballCredentials = Boolean(process.env.SPORTS_API_BASE_URL && process.env.SPORTS_API_KEY);
+  const providerKind = normalizeProvider(process.env.SPORTS_PROVIDER ?? "seed", hasApiFootballCredentials);
+  if (providerKind === "fifa") return true;
+  if (providerKind === "api-football") return Boolean(process.env.SPORTS_API_BASE_URL && process.env.SPORTS_API_KEY);
+  return false;
 }

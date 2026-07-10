@@ -5,12 +5,14 @@ const args = process.argv.slice(2);
 const target = args.find((argument) => !argument.startsWith("--")) ?? process.env.DEPLOYMENT_URL ?? process.env.PLAYWRIGHT_BASE_URL;
 const mode = readOption("mode") ?? process.env.DEPLOYMENT_MODE;
 const expectedSha = readOption("expected-sha") ?? process.env.EXPECTED_GIT_SHA;
+const minCompleted = Number(readOption("min-completed") ?? process.env.MIN_COMPLETED_MATCHES ?? (mode === "live" ? "1" : "0"));
 
 export {};
 
 if (!target) throw new Error("Missing deployed URL. Pass it as an argument or set DEPLOYMENT_URL.");
 if (mode !== "live" && mode !== "fallback") throw new Error("Pass an explicit --mode=live or --mode=fallback.");
 if (expectedSha && !/^[a-f0-9]{7,40}$/i.test(expectedSha)) throw new Error("Invalid expected Git SHA.");
+if (!Number.isInteger(minCompleted) || minCompleted < 0 || minCompleted > 104) throw new Error("Invalid --min-completed value.");
 
 const baseUrl = normalizeUrl(target);
 console.log(`deployedSmokeBaseUrl=${baseUrl}`);
@@ -31,6 +33,9 @@ const snapshot = assertTournamentSnapshot(tournament, mode);
 console.log(`tournamentGroups=${snapshot.groups.length}`);
 console.log(`tournamentMatches=${snapshot.matches.length}`);
 console.log(`tournamentProviderState=${snapshot.providerStatus.state}`);
+const completedMatches = snapshot.matches.filter((match) => match.status === "complete");
+if (completedMatches.length < minCompleted) throw new Error(`Completed matches=${completedMatches.length}; expected at least ${minCompleted}`);
+console.log(`completedMatches=${completedMatches.length}`);
 
 const groups = await fetchJson<unknown>(new URL("/api/groups", baseUrl), "api/groups");
 if (!Array.isArray(groups) || groups.length !== 12) throw new Error("/api/groups did not return all 12 groups");
@@ -76,6 +81,11 @@ interface CanonicalMatchShape {
   stage: Stage;
   homeSource: unknown;
   awaySource: unknown;
+  status: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  homePenaltyScore?: number | null;
+  awayPenaltyScore?: number | null;
 }
 
 interface TournamentSnapshotShape {
@@ -134,6 +144,18 @@ function assertCanonicalMatches(value: unknown, label: string): asserts value is
     if (typeof match.stage !== "string" || !(match.stage in stageCounts)) throw new Error(`${label}[${index}] has an invalid stage`);
     assertParticipantSource(match.homeSource, `${label}[${index}].homeSource`);
     assertParticipantSource(match.awaySource, `${label}[${index}].awaySource`);
+    if (typeof match.status !== "string") throw new Error(`${label}[${index}] has an invalid status`);
+    if (match.status === "complete" || match.status === "live") {
+      if (!isNonNegativeScore(match.homeScore) || !isNonNegativeScore(match.awayScore)) {
+        throw new Error(`${label}[${index}] is ${match.status} without valid scores`);
+      }
+    }
+    if ((match.homePenaltyScore === null) !== (match.awayPenaltyScore === null)) {
+      throw new Error(`${label}[${index}] has an incomplete penalty score`);
+    }
+    if (match.homePenaltyScore !== undefined && match.homePenaltyScore !== null && (!isNonNegativeScore(match.homePenaltyScore) || !isNonNegativeScore(match.awayPenaltyScore))) {
+      throw new Error(`${label}[${index}] has invalid penalty scores`);
+    }
     matchNumbers.push(match.matchNumber);
     stageCounts[match.stage as Stage] += 1;
   });
@@ -142,6 +164,10 @@ function assertCanonicalMatches(value: unknown, label: string): asserts value is
   for (const [stage, expected] of Object.entries(expectedStageCounts)) {
     if (stageCounts[stage as Stage] !== expected) throw new Error(`${label} stage ${stage} count=${stageCounts[stage as Stage]}; expected ${expected}`);
   }
+}
+
+function isNonNegativeScore(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
 }
 
 function assertParticipantSource(value: unknown, label: string): void {

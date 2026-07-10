@@ -942,7 +942,18 @@ function BottomDeck({ snapshot }: { snapshot: TournamentSnapshot }) {
       </section>
 
       <div className="data-bar">
-        <span><span className="live-dot" /> Data refreshed {formatClock(snapshot.lastUpdated, timezone)}</span>
+        <span>
+          <span className="live-dot" /> Data refreshed {formatClock(snapshot.lastUpdated, timezone)}
+          {snapshot.providerStatus.provider === "FIFA" ? (
+            <a
+              href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/articles/match-schedule-fixtures-results-teams-stadiums"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Source: FIFA
+            </a>
+          ) : null}
+        </span>
         <span>Total matches <b>{snapshot.totalMatches}</b></span>
         <span>Goals scored <b>{snapshot.goalsScored}</b></span>
         <span>Goals per match <b>{(snapshot.goalsScored / Math.max(1, snapshot.groups.flatMap((group) => group.matches).filter((match) => match.homeScore !== null).length)).toFixed(2)}</b></span>

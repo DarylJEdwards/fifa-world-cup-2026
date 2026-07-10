@@ -7,18 +7,18 @@ This is the living planning surface. Keep it current as the project changes.
 - The canonical tournament model contains all 104 matches: 72 group matches and 32 knockout matches.
 - The Round of 32 participant formulas and all 495 official Annexe C third-place combinations are implemented and exhaustively tested.
 - The current 48-team field and all 12 groups are represented without fabricated results. Seed mode supplies a structural fallback with scheduled/null scores only.
-- API-Football league `1`, season `2026` is the required live source. The adapter rejects wrong competition data and incomplete fixture sets instead of mixing provider and seed truth.
+- FIFA's official public calendar API is the primary live source. The adapter requires competition `17`, season `285023`, all 104 unique match numbers, exact stage boundaries, known status/result enums, and resolved teams for every active or completed match.
 - Automatic refresh is implemented end to end: 15-second fixture refresh while a match is live, 300 seconds while idle, 30-second degraded retries, and a 15-minute cache for optional player leaderboards.
 - Matches, Groups, Knockout, Teams, Players, Stats Hub, and Settings are complete product surfaces.
-- Local release evidence is green: 43 Vitest tests, Vercel NodeNext type-checking, production build, bundle budgets, and 10 desktop/mobile Playwright scenarios with serious/critical axe checks.
-- The remaining release gate is operational: configure `SPORTS_API_KEY` in Vercel, deploy commit `db79811` or later, then pass `npm run verify:production -- <url> --mode=live --expected-sha=<sha>`.
+- Local release evidence is green: 48 Vitest tests, Vercel NodeNext type-checking, production build, bundle budgets, and 10 desktop/mobile Playwright scenarios against FIFA's real feed with serious/critical axe checks.
+- The remaining release gate is deployment proof: publish the current commit, then pass `npm run verify:production -- <url> --mode=live --expected-sha=<sha>`.
 
 ## Current State
 
 - React/Vite/TypeScript app exists in this repo.
-- Express API proxy serves normalized tournament data at `/api/*` and maps API-Football standings/fixtures envelopes when provider env vars are configured.
+- Express API proxy serves normalized tournament data at `/api/*` and maps FIFA's official 104-match calendar when `SPORTS_PROVIDER=fifa`.
 - Seed-cache data drives the app when no provider is configured. It is a complete structural 104-match schedule and never fabricates scores or winners.
-- API-Football is the intended live provider. The proxy sends `x-apisports-key` server-side, validates league `1` / season `2026`, requires the complete 104-fixture feed, maps scores/statuses/bracket/player leaders, and exposes provider freshness and capabilities. Credentialed live smoke is blocked only by the missing key.
+- FIFA is the primary score/schedule provider and needs no secret. API-Football remains an optional adapter for player leaderboards if a key is added later.
 - The UI renders a cinematic 3D command center with all 12 groups A-L, selected-group inspector, top-two qualification rail, best-third-place race, and projected knockout slots.
 - The 3D stage is lazy-loaded behind a React `Suspense` boundary, with Three.js and React Three Fiber isolated into async vendor chunks.
 - Preferences persist locally: selected group, favorites, theme, layout, timezone, refresh interval, and reduced-motion toggle.
@@ -94,13 +94,14 @@ This is the living planning surface. Keep it current as the project changes.
 
 ### Phase 4 - Live Provider Integration
 
-- API-Football selected and documented as the intended provider. (Done)
-- Implement API-Football-specific mapping into `TournamentSnapshot`. (Done for the complete 104-match fixture set, standings, statuses, scores, penalties, stages, teams, and optional player leaders.)
+- FIFA official calendar selected as the primary score/schedule provider. (Done)
+- Implement FIFA mapping into `TournamentSnapshot`. (Done for all 104 matches, computed group standings, statuses, scores, penalties, stages, teams, dates, and venues.)
+- Retain API-Football as an optional player-leaderboard adapter. (Done)
 - Add schema validation at the provider boundary. (Done with competition, envelope, fixture-count, group, stage, status, and snapshot validation.)
 - Add adaptive caching and stale-data behavior. (Done: 15 seconds live, 300 seconds idle, 600 seconds stale, optional player endpoints 15 minutes.)
 - Add provider health/status display. (Done)
-- Add live-smoke automation behind secrets. (Done with `npm run smoke:provider` and manual/scheduled GitHub Actions provider-smoke; credentialed execution is blocked only by the missing key.)
-- Run a live API-Football smoke check with secrets loaded from ignored local env or deployment secret storage.
+- Add keyless live-smoke automation. (Done with `npm run smoke:provider` and manual/scheduled GitHub Actions provider-smoke.)
+- Run the live FIFA smoke against the current tournament. (Done: 104 matches, 97 complete at verification time.)
 - Update `config/data-sources.yaml` and rendered/reference docs when provider state changes.
 
 ### Phase 5 - Deployment
@@ -118,13 +119,13 @@ This is the living planning surface. Keep it current as the project changes.
 ## Remaining Release Gates
 
 - Three.js remains a large async vendor chunk, currently budgeted at 750 kB; add bundle visualization before tightening further.
-- A valid `SPORTS_API_KEY` must be added to Vercel Production without printing or committing it.
-- The credentialed provider smoke must confirm the live 104-fixture response and optional player endpoint availability.
+- The current FIFA-provider commit must be deployed to Vercel and its build SHA verified.
+- Strict live-mode production smoke must confirm 104 matches, official scores, freshness, all APIs, browser workflows, and source attribution.
 - Production must be redeployed from the current commit and pass live-mode API, browser, build-SHA, freshness, capability, and client-secret checks.
 - Player statistics remain intentionally unavailable in seed mode; the screen never substitutes fabricated leaderboards.
 - Venue timezone is currently a command-center placeholder, not match-venue-specific formatting.
 - Production API paths use Vercel serverless entrypoints at `api/[...path].ts` plus `api/teams/[id].ts`; local `tsx watch` remains development-only.
-- Live-provider smoke behind secrets remains the final data-source gate beyond the comprehensive mock coverage.
+- FIFA has no published developer SLA; strict schema validation, stale labeling, seed fallback, scheduled smoke, and visible attribution remain operational safeguards.
 - Visual QA screenshots were generated during implementation; `qa/` is ignored and should stay out of git.
 - The manual GitHub Actions Vercel deploy workflow still needs `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` repository secrets before use; direct CLI production deployment is working.
 
