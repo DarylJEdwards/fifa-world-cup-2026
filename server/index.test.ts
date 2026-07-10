@@ -90,9 +90,9 @@ describe("World Cup API contract", () => {
       response.setHeader("content-type", "application/json");
       response.end(JSON.stringify(fifaCalendarEnvelope()));
     });
-    process.env.SPORTS_PROVIDER = "fifa";
-    process.env.SPORTS_API_BASE_URL = provider.baseUrl;
-    process.env.SPORTS_API_SEASON = "2026";
+    process.env.SPORTS_PROVIDER = "fifa\r\n";
+    process.env.SPORTS_API_BASE_URL = `${provider.baseUrl}\r\n`;
+    process.env.SPORTS_API_SEASON = "2026\r\n";
 
     const api = await startServer(createApp());
     try {
@@ -135,7 +135,7 @@ describe("World Cup API contract", () => {
           : { errors: [], results: 0, response: [] };
       response.end(JSON.stringify(body));
     });
-    process.env.SPORTS_API_BASE_URL = provider.baseUrl;
+    process.env.SPORTS_API_BASE_URL = `${provider.baseUrl}\r\n`;
     process.env.SPORTS_API_KEY = "test-key";
     process.env.PROVIDER_CACHE_TTL_SECONDS = "1";
     const api = await startServer(createApp());
@@ -163,7 +163,7 @@ describe("World Cup API contract", () => {
       }
       response.end(JSON.stringify(request.url?.startsWith("/fixtures") ? apiFootballFixturesEnvelope() : { errors: [], results: 0, response: [] }));
     });
-    process.env.SPORTS_API_BASE_URL = provider.baseUrl;
+    process.env.SPORTS_API_BASE_URL = `${provider.baseUrl}\r\n`;
     process.env.SPORTS_API_KEY = "test-key";
     process.env.SPORTS_PROVIDER = "API-Football";
 
@@ -194,7 +194,7 @@ describe("World Cup API contract", () => {
       response.setHeader("content-type", "application/json");
       response.end(JSON.stringify({ groups: [] }));
     });
-    process.env.SPORTS_API_BASE_URL = provider.baseUrl;
+    process.env.SPORTS_API_BASE_URL = `${provider.baseUrl}\r\n`;
     process.env.SPORTS_API_KEY = "test-key";
     process.env.SPORTS_PROVIDER = "Broken Provider";
 
@@ -217,7 +217,7 @@ describe("World Cup API contract", () => {
       response.statusCode = 429;
       response.end("rate limited");
     });
-    process.env.SPORTS_API_BASE_URL = provider.baseUrl;
+    process.env.SPORTS_API_BASE_URL = `${provider.baseUrl}\r\n`;
     process.env.SPORTS_API_KEY = "test-key";
     process.env.SPORTS_PROVIDER = "Rate Limited Provider";
 
@@ -244,7 +244,7 @@ describe("World Cup API contract", () => {
       response.statusCode = statusCode;
       response.end(`provider returned ${statusCode}`);
     });
-    process.env.SPORTS_API_BASE_URL = provider.baseUrl;
+    process.env.SPORTS_API_BASE_URL = `${provider.baseUrl}\r\n`;
     process.env.SPORTS_API_KEY = "test-key";
     process.env.SPORTS_PROVIDER = "API-Football";
 
@@ -265,7 +265,7 @@ describe("World Cup API contract", () => {
     const provider = await startServer(() => {
       // Intentionally hold the connection open until the provider timeout aborts the request.
     });
-    process.env.SPORTS_API_BASE_URL = provider.baseUrl;
+    process.env.SPORTS_API_BASE_URL = `${provider.baseUrl}\r\n`;
     process.env.SPORTS_API_KEY = "test-key";
     process.env.SPORTS_PROVIDER = "Slow Provider";
     process.env.PROVIDER_TIMEOUT_MS = "25";
@@ -292,7 +292,7 @@ describe("World Cup API contract", () => {
       }
       response.end(JSON.stringify(apiFootballFixturesEnvelope()));
     });
-    process.env.SPORTS_API_BASE_URL = provider.baseUrl;
+    process.env.SPORTS_API_BASE_URL = `${provider.baseUrl}\r\n`;
     process.env.SPORTS_API_KEY = "test-key";
     process.env.SPORTS_PROVIDER = "Empty Provider";
 
@@ -318,7 +318,7 @@ describe("World Cup API contract", () => {
       }
       response.end(JSON.stringify(apiFootballFixturesEnvelope()));
     });
-    process.env.SPORTS_API_BASE_URL = provider.baseUrl;
+    process.env.SPORTS_API_BASE_URL = `${provider.baseUrl}\r\n`;
     process.env.SPORTS_API_KEY = "test-key";
     process.env.SPORTS_PROVIDER = "Incomplete Provider";
 
@@ -349,7 +349,7 @@ describe("World Cup API contract", () => {
       }
       response.end(JSON.stringify(apiFootballFixturesEnvelope()));
     });
-    process.env.SPORTS_API_BASE_URL = provider.baseUrl;
+    process.env.SPORTS_API_BASE_URL = `${provider.baseUrl}\r\n`;
     process.env.SPORTS_API_KEY = "test-key";
     process.env.SPORTS_PROVIDER = "API-Football";
     process.env.PROVIDER_CACHE_TTL_SECONDS = "1";
@@ -379,7 +379,7 @@ describe("World Cup API contract", () => {
       providerRequests += 1;
       response.end(JSON.stringify(apiFootballFixturesEnvelope()));
     });
-    process.env.SPORTS_API_BASE_URL = provider.baseUrl;
+    process.env.SPORTS_API_BASE_URL = `${provider.baseUrl}\r\n`;
     process.env.SPORTS_API_KEY = "test-key";
     process.env.SPORTS_API_LEAGUE_ID = "2";
     const api = await startServer(createApp());
@@ -403,7 +403,7 @@ describe("World Cup API contract", () => {
       if (request.url?.startsWith("/fixtures")) return response.end(JSON.stringify(apiFootballFixturesEnvelope({ fixtureCount: 103, leagueId: 2 })));
       response.end(JSON.stringify({ errors: [], results: 0, response: [] }));
     });
-    process.env.SPORTS_API_BASE_URL = provider.baseUrl;
+    process.env.SPORTS_API_BASE_URL = `${provider.baseUrl}\r\n`;
     process.env.SPORTS_API_KEY = "test-key";
     const api = await startServer(createApp());
     try {
@@ -427,7 +427,7 @@ describe("World Cup API contract", () => {
       if (request.url?.startsWith("/fixtures")) return response.end(JSON.stringify(apiFootballFixturesEnvelope()));
       response.end(JSON.stringify(apiFootballPlayersEnvelope()));
     });
-    process.env.SPORTS_API_BASE_URL = provider.baseUrl;
+    process.env.SPORTS_API_BASE_URL = `${provider.baseUrl}\r\n`;
     process.env.SPORTS_API_KEY = "test-key";
     const api = await startServer(createApp());
     try {
@@ -459,7 +459,7 @@ describe("World Cup API contract", () => {
       if (request.url?.startsWith("/fixtures")) return response.end(JSON.stringify(apiFootballFixturesEnvelope({ includeLive: false })));
       response.end(JSON.stringify({ errors: [], results: 0, response: [] }));
     });
-    process.env.SPORTS_API_BASE_URL = provider.baseUrl;
+    process.env.SPORTS_API_BASE_URL = `${provider.baseUrl}\r\n`;
     process.env.SPORTS_API_KEY = "test-key";
     const api = await startServer(createApp());
     try {

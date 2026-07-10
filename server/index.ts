@@ -39,8 +39,8 @@ export function createApp() {
       ready,
       degraded: !ready,
       providerConfigured: isProviderConfigured(),
-      provider: process.env.SPORTS_PROVIDER ?? "seed",
-      buildSha: process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.GITHUB_SHA ?? "local",
+      provider: envString("SPORTS_PROVIDER") ?? "seed",
+      buildSha: envString("VERCEL_GIT_COMMIT_SHA") ?? envString("GITHUB_SHA") ?? "local",
       cachedAt: cache.lastUpdated,
       providerStatus: cache.providerStatus
     });
@@ -86,9 +86,9 @@ if (process.env.NODE_ENV !== "test" && !process.env.VERCEL) {
 }
 
 export async function loadSnapshot(): Promise<TournamentSnapshot> {
-  const providerUrl = process.env.SPORTS_API_BASE_URL;
-  const providerKey = process.env.SPORTS_API_KEY;
-  const configuredProvider = process.env.SPORTS_PROVIDER ?? "seed";
+  const providerUrl = envString("SPORTS_API_BASE_URL");
+  const providerKey = envString("SPORTS_API_KEY");
+  const configuredProvider = envString("SPORTS_PROVIDER") ?? "seed";
   const providerKind = normalizeProvider(configuredProvider, Boolean(providerUrl && providerKey));
   const providerName = providerKind === "fifa" ? "FIFA" : configuredProvider;
   const missingConfig =
@@ -124,15 +124,15 @@ export async function loadSnapshot(): Promise<TournamentSnapshot> {
     const snapshot = providerKind === "fifa"
       ? await loadFifaSnapshot({
           baseUrl: providerUrl ?? FIFA_PUBLIC_BASE_URL,
-          season: process.env.SPORTS_API_SEASON ?? FIFA_WORLD_CUP_SEASON,
+          season: envString("SPORTS_API_SEASON") ?? FIFA_WORLD_CUP_SEASON,
           timeoutMs,
           providerName
         })
       : await loadApiFootballSnapshot({
           baseUrl: providerUrl as string,
           apiKey: providerKey as string,
-          leagueId: process.env.SPORTS_API_LEAGUE_ID ?? API_FOOTBALL_WORLD_CUP_LEAGUE_ID,
-          season: process.env.SPORTS_API_SEASON ?? API_FOOTBALL_WORLD_CUP_SEASON,
+          leagueId: envString("SPORTS_API_LEAGUE_ID") ?? API_FOOTBALL_WORLD_CUP_LEAGUE_ID,
+          season: envString("SPORTS_API_SEASON") ?? API_FOOTBALL_WORLD_CUP_SEASON,
           timeoutMs,
           providerName
         });
@@ -260,15 +260,20 @@ function withCacheAge(
 }
 
 function envNumber(name: string, fallback: number): number {
-  const value = Number(process.env[name]);
+  const value = Number(envString(name));
   return Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
 function envOptionalNumber(name: string): number | undefined {
-  const raw = process.env[name];
+  const raw = envString(name);
   if (!raw) return undefined;
   const value = Number(raw);
   return Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
+function envString(name: string): string | undefined {
+  const value = process.env[name]?.trim();
+  return value || undefined;
 }
 
 function normalizeProvider(provider: string, inferApiFootball = false): "fifa" | "api-football" | "unknown" {
@@ -280,9 +285,11 @@ function normalizeProvider(provider: string, inferApiFootball = false): "fifa" |
 }
 
 function isProviderConfigured(): boolean {
-  const hasApiFootballCredentials = Boolean(process.env.SPORTS_API_BASE_URL && process.env.SPORTS_API_KEY);
-  const providerKind = normalizeProvider(process.env.SPORTS_PROVIDER ?? "seed", hasApiFootballCredentials);
+  const providerUrl = envString("SPORTS_API_BASE_URL");
+  const providerKey = envString("SPORTS_API_KEY");
+  const hasApiFootballCredentials = Boolean(providerUrl && providerKey);
+  const providerKind = normalizeProvider(envString("SPORTS_PROVIDER") ?? "seed", hasApiFootballCredentials);
   if (providerKind === "fifa") return true;
-  if (providerKind === "api-football") return Boolean(process.env.SPORTS_API_BASE_URL && process.env.SPORTS_API_KEY);
+  if (providerKind === "api-football") return Boolean(providerUrl && providerKey);
   return false;
 }
