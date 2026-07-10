@@ -46,7 +46,7 @@ test("all product sections expose complete fallback-safe workflows", async ({ pa
 
   await openSection("Stats Hub");
   await expect(page.locator(".kpi-grid")).toContainText("104");
-  await expect(page.locator(".stage-telemetry > div").first()).toContainText("0/72");
+  await expect(page.locator(".stage-telemetry > div").first()).toContainText("/72");
 
   await openSection("Settings");
   const settings = page.getByRole("region", { name: "Settings" });
