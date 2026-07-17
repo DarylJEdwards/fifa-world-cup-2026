@@ -85,6 +85,26 @@ describe("official FIFA provider", () => {
     expect(() => mapFifaSnapshot({ calendar: wrongBracket, providerName: "FIFA" })).toThrow("canonical source");
   });
 
+  it("accepts FIFA's third-place stage aliases but rejects unrelated labels", () => {
+    for (const label of ["Play-off for third place", "Bronze final"]) {
+      const calendar = fifaCalendarFixture();
+      const thirdPlace = calendar.Results.find((match) => match.MatchNumber === 103);
+      if (!thirdPlace) throw new Error("Missing third-place fixture");
+      thirdPlace.StageName = [{ Locale: "en-GB", Description: label }];
+
+      expect(() => mapFifaSnapshot({ calendar, providerName: "FIFA" })).not.toThrow();
+    }
+
+    const wrongStage = fifaCalendarFixture();
+    const thirdPlace = wrongStage.Results.find((match) => match.MatchNumber === 103);
+    if (!thirdPlace) throw new Error("Missing third-place fixture");
+    thirdPlace.StageName = [{ Locale: "en-GB", Description: "Semi-final" }];
+
+    expect(() => mapFifaSnapshot({ calendar: wrongStage, providerName: "FIFA" })).toThrow(
+      "FIFA match 103 stage=Semi-final"
+    );
+  });
+
   it("fails closed on unknown FIFA status enums", () => {
     expect(mapFifaMatchStatus(0)).toBe("complete");
     expect(mapFifaMatchStatus(1)).toBe("scheduled");

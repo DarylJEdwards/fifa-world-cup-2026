@@ -30,14 +30,14 @@ const stageByMatchNumber = (matchNumber: number): MatchStage => {
   return "final";
 };
 
-const expectedStageNames: Readonly<Record<MatchStage, string>> = {
-  group: "First Stage",
-  round32: "Round of 32",
-  round16: "Round of 16",
-  quarterfinal: "Quarter-final",
-  semifinal: "Semi-final",
-  thirdPlace: "Play-off for third place",
-  final: "Final"
+const acceptedStageNames: Readonly<Record<MatchStage, readonly string[]>> = {
+  group: ["First Stage"],
+  round32: ["Round of 32"],
+  round16: ["Round of 16"],
+  quarterfinal: ["Quarter-final"],
+  semifinal: ["Semi-final"],
+  thirdPlace: ["Play-off for third place", "Bronze final"],
+  final: ["Final"]
 };
 
 const teamCodeAliases: Readonly<Record<string, string>> = {
@@ -230,8 +230,9 @@ function validateAndOrderCalendar(calendar: FifaCalendarEnvelope): FifaCalendarM
     const matchNumber = numberOrThrow(event.MatchNumber, "MatchNumber");
     const expectedStage = stageByMatchNumber(matchNumber);
     const stageName = localizedDescription(event.StageName);
-    if (stageName !== expectedStageNames[expectedStage]) {
-      throw new Error(`FIFA match ${matchNumber} stage=${stageName || "missing"}; expected ${expectedStageNames[expectedStage]}`);
+    const stageNames = acceptedStageNames[expectedStage];
+    if (!stageNames.includes(stageName)) {
+      throw new Error(`FIFA match ${matchNumber} stage=${stageName || "missing"}; expected ${stageNames.join(" or ")}`);
     }
     if (!event.Date || Number.isNaN(new Date(event.Date).getTime())) {
       throw new Error(`FIFA match ${matchNumber} has an invalid kickoff`);
